@@ -1,4 +1,5 @@
-import { IsEmail, IsString, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+import { Role } from '@prisma/client';
+import { IsEmail, IsString, IsNotEmpty, MinLength, MaxLength, IsStrongPassword, IsIn, IsOptional } from 'class-validator';
 
 export class CreateUserDto {
   @IsEmail()
@@ -6,15 +7,31 @@ export class CreateUserDto {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(9)
-  @MaxLength(32)
+  @IsStrongPassword()
   public password: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(16)
+  public nom: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(16)
+  public prenom: string;
 }
 
 export class UpdateUserDto {
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  @MinLength(9)
-  @MaxLength(32)
-  public password: string;
+  @IsStrongPassword()
+  public password?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(Object.values(Role))
+  public role?: Role;
 }

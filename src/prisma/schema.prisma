@@ -27,6 +27,7 @@ model User {
   email    String @unique
   password String
   nom      String
+  prenom   String
   role     Role   @default(controle)
 
   //Relations
@@ -85,6 +86,6 @@ model Signature {
   controleurId String?
   controleur   User?   @relation(fields: [controleurId], references: [id])
 
-  signataireNom   String? //Pour le chauffeur externe
-  base64 String
+  signataireNom String? //Pour le chauffeur externe
+  base64        String
 }

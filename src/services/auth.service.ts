@@ -24,10 +24,10 @@ export class AuthService {
 
   public async login(userData: CreateUserDto): Promise<{ cookie: string; findUser: User }> {
     const findUser: User = await this.users.findUnique({ where: { email: userData.email } });
-    if (!findUser) throw new HttpException(409, `This email ${userData.email} was not found`);
+    if (!findUser) throw new HttpException(409, `Identifiants incorrects`);
 
     const isPasswordMatching: boolean = await compare(userData.password, findUser.password);
-    if (!isPasswordMatching) throw new HttpException(409, "Password is not matching");
+    if (!isPasswordMatching) throw new HttpException(409, "Identifiants incorrects");
 
     const tokenData = this.createToken(findUser);
     const cookie = this.createCookie(tokenData);
