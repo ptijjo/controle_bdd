@@ -2,10 +2,16 @@ import { NextFunction, Request, Response } from 'express';
 import { Container } from 'typedi';
 import { User } from '@interfaces/users.interface';
 import { UserService } from '@services/users.service';
+import { CreateInvitationDto } from '@/dtos/users.dto';
+import { RequestWithUser } from '@/interfaces/auth.interface';
+import { Role } from '@prisma/client';
+import { HttpException } from '@/exceptions/httpException';
+
 
 export class UserController {
   public user = Container.get(UserService);
-
+ 
+  
   public getUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const findAllUsersData: User[] = await this.user.findAllUser();
@@ -18,7 +24,7 @@ export class UserController {
 
   public getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = Number(req.params.id);
+      const userId = String(req.params.id);
       const findOneUserData: User = await this.user.findUserById(userId);
 
       res.status(200).json({ data: findOneUserData, message: 'findOne' });
@@ -27,12 +33,31 @@ export class UserController {
     }
   };
 
-  public createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      const userData: User = req.body;
-      const createUserData: User = await this.user.createUser(userData);
+  // public createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  //   try {
+  //     const userData: User = req.body;
+  //     const createUserData: User = await this.user.createUser(userData);
 
-      res.status(201).json({ data: createUserData, message: 'created' });
+  //     res.status(201).json({ data: createUserData, message: 'created' });
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // };
+
+  public inviteUser = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data: CreateInvitationDto = req.body;
+  
+
+      // if (req.user.role !== Role.chef_service && req.user.role !== Role.controleur) {
+      //   throw new HttpException(404, "Opération non authorisée !");
+      // }
+
+      const inviteUser = await this.user.invitationUser(data);
+
+      
+
+      res.status(200).json({ data: inviteUser, message: 'invitation envoyée !' });
     } catch (error) {
       next(error);
     }
@@ -40,7 +65,7 @@ export class UserController {
 
   public updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = Number(req.params.id);
+      const userId = String(req.params.id);
       const userData: User = req.body;
       const updateUserData: User = await this.user.updateUser(userId, userData);
 
@@ -52,7 +77,7 @@ export class UserController {
 
   public deleteUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = Number(req.params.id);
+      const userId = String(req.params.id);
       const deleteUserData: User = await this.user.deleteUser(userId);
 
       res.status(200).json({ data: deleteUserData, message: 'deleted' });

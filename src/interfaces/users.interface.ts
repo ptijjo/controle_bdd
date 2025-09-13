@@ -7,4 +7,6 @@ export interface User {
   nom: string;
   prenom: string;
   role: Role;
+  createdAt: Date;
+  updatedAt: Date;
 }

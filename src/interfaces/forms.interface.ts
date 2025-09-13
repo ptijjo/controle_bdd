@@ -15,22 +15,23 @@ export interface Form {
   prenom: string;
   email: string;
 
-  ficheHoraire?: Boolean;
-  respectItineraire?: Boolean;
-  affichageDestination?: Boolean;
-  affichageNumeroLigne?: Boolean;
-  pictoEnfant?: Boolean;
-  tarifAffiche?: Boolean;
-  depliantHoraire?: Boolean;
-  reglement?: Boolean;
-  tenue?: Boolean;
-  carosserie?: Boolean;
-  tableauBord?: Boolean;
-  sol?: Boolean;
-  temperature?: Boolean;
-  luminosite?: Boolean;
+  ficheHoraire?: boolean;
+  respectItineraire?: boolean;
+  affichageDestination?: boolean;
+  affichageNumeroLigne?: boolean;
+  pictoEnfant?: boolean;
+  tarifAffiche?: boolean;
+  depliantHoraire?: boolean;
+  reglement?: boolean;
+  tenue?: boolean;
+  carosserie?: boolean;
+  tableauBord?: boolean;
+  sol?: boolean;
+  temperature?: boolean;
+  luminosite?: boolean;
   nbreVoyageur: number;
   nbreVoyageurIrregulier: number;
 
   observation: string;
+  createdAt: Date;
 }

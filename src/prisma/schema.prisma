@@ -2,12 +2,13 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-  provider = "postgres"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../../node_modules/.prisma/client"
 }
 
 enum Role {
@@ -22,18 +23,24 @@ enum TypeLigne {
   SA
 }
 
+enum SignatureType {
+  controleur
+  chauffeur
+}
+
 model User {
-  id       String @id @default(cuid())
-  email    String @unique
-  password String
-  nom      String
-  prenom   String
-  role     Role   @default(controle)
-
+  id             String   @id @default(cuid())
+  email          String   @unique
+  password       String
+  nom            String
+  prenom         String
+  role           Role     @default(controle)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
   //Relations
-  formControleur Form[] @relation("Controleur")
+  formControleur Form[]   @relation("Controleur")
 
-  Signature Signature[]
+  signatures Signature[]
 }
 
 model Form {
@@ -73,19 +80,24 @@ model Form {
   nbreVoyageurIrregulier Int
 
   observation String
+  createdAt   DateTime @default(now())
 
   //Relation
-  Signature Signature[]
+  signatures Signature[]
+   @@map("forms")
 }
 
 model Signature {
-  id     String @id @default(cuid())
-  formId String
-  form   Form   @relation(fields: [formId], references: [id])
-
+  id           String        @id @default(cuid())
+  formId       String
+  form         Form          @relation(fields: [formId], references: [id])
+  type         SignatureType
+  createdAt    DateTime      @default(now())
   controleurId String?
-  controleur   User?   @relation(fields: [controleurId], references: [id])
+  controleur   User?         @relation(fields: [controleurId], references: [id])
 
   signataireNom String? //Pour le chauffeur externe
   base64        String
+
+  @@unique([formId, type]) // garantit qu'une seule signature par type pour le formulaire
 }

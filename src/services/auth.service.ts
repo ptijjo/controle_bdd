@@ -3,7 +3,7 @@ import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { Service } from 'typedi';
 import { SECRET_KEY } from '@config';
-import { CreateUserDto } from '@dtos/users.dto';
+import { AuthDto, CreateUserDto } from '@dtos/users.dto';
 import { HttpException } from '@exceptions/httpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
@@ -22,7 +22,7 @@ export class AuthService {
     return createUserData;
   }
 
-  public async login(userData: CreateUserDto): Promise<{ cookie: string; findUser: User }> {
+  public async login(userData: AuthDto): Promise<{ cookie: string; findUser: User }> {
     const findUser: User = await this.users.findUnique({ where: { email: userData.email } });
     if (!findUser) throw new HttpException(409, `Identifiants incorrects`);
 

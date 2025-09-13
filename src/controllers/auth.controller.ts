@@ -3,13 +3,29 @@ import { Container } from 'typedi';
 import { RequestWithUser } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
 import { AuthService } from '@services/auth.service';
+import { AuthDto, CreateUserDto } from '@/dtos/users.dto';
+import { TokenService } from '@/services/token.service';
+import { HttpException } from '@/exceptions/httpException';
 
 export class AuthController {
   public auth = Container.get(AuthService);
+  public token = Container.get(TokenService);
 
   public signUp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userData: User = req.body;
+      // Récupère les données du corps de la requête
+      const userData: CreateUserDto = req.body;
+
+      // Décodage du token d'invitation
+      const decodedToken = await this.token.tokenInvitation(req.params.id);
+
+      if (!decodedToken?.email) {
+        throw new HttpException(400, "Email manquant dans le token d'invitation");
+      }
+      // Assigne l'email provenant du token
+      userData.email = decodedToken.email;
+
+      // Appel du service pour créer l'utilisateur
       const signUpUserData: User = await this.auth.signup(userData);
 
       res.status(201).json({ data: signUpUserData, message: 'signup' });
@@ -20,7 +36,7 @@ export class AuthController {
 
   public logIn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userData: User = req.body;
+      const userData: AuthDto = req.body;
       const { cookie, findUser } = await this.auth.login(userData);
 
       res.setHeader('Set-Cookie', [cookie]);
