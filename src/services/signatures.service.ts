@@ -8,7 +8,7 @@ import { Signature } from '@/interfaces/signatures.interface';
 import { CreateSignatureDto } from '@/dtos/signatures.dto';
 
 @Service()
-export class FormService {
+export class SignatureService {
   public signature = new PrismaClient().signature;
 
   public async findAllSignature(): Promise<Signature[]> {

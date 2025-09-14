@@ -14,7 +14,7 @@ generator client {
 enum Role {
   controleur
   chef_service
-  controle
+  agent
 }
 
 enum TypeLigne {
@@ -34,9 +34,9 @@ model User {
   password       String
   nom            String
   prenom         String
-  role           Role     @default(controle)
+  role           Role     @default(agent)
   createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   //Relations
   formControleur Form[]   @relation("Controleur")
 

@@ -6,10 +6,6 @@ export class CreateSignatureDto {
   @IsNotEmpty()
   public base64: string;
 
-  @IsOptional()
-  @IsString()
-  public signataireNom?: string;
-
   @IsIn(Object.values(SignatureType))
   @IsString()
   public type: SignatureType;
