@@ -1,4 +1,3 @@
-import { HttpException } from '@/exceptions/httpException';
 import { MailService } from '../../services/mails.service';
 
 const mailservice = new MailService();

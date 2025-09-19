@@ -1,7 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
 import { Container } from 'typedi';
-import { User } from '@interfaces/users.interface';
-import { CreateInvitationDto } from '@/dtos/users.dto';
 import { RequestWithUser } from '@/interfaces/auth.interface';
 import { Role, SignatureType } from '@prisma/client';
 import { HttpException } from '@/exceptions/httpException';

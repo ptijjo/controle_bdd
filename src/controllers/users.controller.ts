@@ -4,8 +4,7 @@ import { User } from '@interfaces/users.interface';
 import { UserService } from '@services/users.service';
 import { CreateInvitationDto } from '@/dtos/users.dto';
 import { RequestWithUser } from '@/interfaces/auth.interface';
-import { Role } from '@prisma/client';
-import { HttpException } from '@/exceptions/httpException';
+
 
 
 export class UserController {
@@ -33,16 +32,14 @@ export class UserController {
     }
   };
 
-  // public createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  //   try {
-  //     const userData: User = req.body;
-  //     const createUserData: User = await this.user.createUser(userData);
-
-  //     res.status(201).json({ data: createUserData, message: 'created' });
-  //   } catch (error) {
-  //     next(error);
-  //   }
-  // };
+  public getConnected = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void>=>{
+    if (!req.user) {
+      res.status(401).json({message:"Non authetifié"})
+    }
+    const { id, email, nom, prenom, role } = req.user;
+    
+   res.json({ id, email, nom, prenom,role });
+  }
 
   public inviteUser = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
     try {

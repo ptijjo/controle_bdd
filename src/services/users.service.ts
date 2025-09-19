@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import { hash } from 'bcrypt';
 import { Service } from 'typedi';
 import { CreateInvitationDto, CreateUserDto } from '@dtos/users.dto';
@@ -7,10 +6,11 @@ import { User } from '@interfaces/users.interface';
 import jwt from 'jsonwebtoken';
 import { FRONT_END, SECRET_KEY_INVITATION } from '@/config';
 import { sendMailActivation } from '../mails/users/user.email';
+import prisma from '@/utils/prisma';
 
 @Service()
 export class UserService {
-  public user = new PrismaClient().user;
+  public user = prisma.user;
 
   public async findAllUser(): Promise<User[]> {
     const allUser: User[] = await this.user.findMany();

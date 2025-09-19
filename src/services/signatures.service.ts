@@ -1,15 +1,13 @@
-import { PrismaClient, SignatureType } from '@prisma/client';
+import { SignatureType } from '@prisma/client';
 import { Service } from 'typedi';
 import { HttpException } from '@/exceptions/httpException';
-
-import { Form } from '@/interfaces/forms.interface';
-import { CreateFormDto } from '@/dtos/forms.dto';
 import { Signature } from '@/interfaces/signatures.interface';
 import { CreateSignatureDto } from '@/dtos/signatures.dto';
+import prisma from '@/utils/prisma';
 
 @Service()
 export class SignatureService {
-  public signature = new PrismaClient().signature;
+  public signature = prisma.signature;
 
   public async findAllSignature(): Promise<Signature[]> {
     const allSignature: Signature[] = await this.signature.findMany();

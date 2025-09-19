@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { Service } from 'typedi';
@@ -7,10 +6,11 @@ import { AuthDto, CreateUserDto } from '@dtos/users.dto';
 import { HttpException } from '@exceptions/httpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
+import prisma from '@/utils/prisma';
 
 @Service()
 export class AuthService {
-  public users = new PrismaClient().user;
+  public users = prisma.user;
 
   public async signup(userData: CreateUserDto): Promise<User> {
     const findUser: User = await this.users.findUnique({ where: { email: userData.email } });
