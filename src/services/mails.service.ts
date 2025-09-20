@@ -2,6 +2,7 @@ import { Service } from 'typedi';
 import Mailjet from 'node-mailjet';
 import { EMAIL, MJ_APIKEY_PRIVATE, MJ_APIKEY_PUBLIC } from '@/config';
 import { HttpException } from '../exceptions/httpException';
+import generatePdf from '@/utils/pdfCreator';
 
 interface MailjetResponse {
   Messages: {
@@ -529,5 +530,50 @@ export class MailService {
         </table>
     </center>
 </body> `;
+  }
+
+  public async sendResume(emailChauffeur: string, formpdf: any): Promise<string> {
+    const mailjet = new Mailjet({
+      apiKey: MJ_APIKEY_PUBLIC,
+      apiSecret: MJ_APIKEY_PRIVATE,
+    });
+      
+    const request = await mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [
+        {
+          From: {
+            Email: EMAIL,
+            Name: 'Transdev Grand Est',
+          },
+          To: [
+            {
+              Email: emailChauffeur,
+              Name: '',
+            },
+            {
+              Email: 'bangouraibrahima57@gmail.com',
+              Name: '',
+            },
+          ],
+          Subject: "Compte rendu de contrôle",
+          TextPart: "Veuillez trouver ci-joint votre rapport de contrôle en PDF.",
+          HTMLPart: "<h3>Bonjour,</h3><p>Veuillez trouver ci-joint votre rapport de contrôle en PDF.</p>",
+          Attachments: [
+            {
+              ContentType: 'application/pdf',
+              Filename: 'document.pdf',
+              Base64Content: formpdf,
+            },
+          ],
+        },
+      ],
+    });
+
+    const response = request.body as unknown as MailjetResponse;
+
+    if (response.Messages[0].Status.trim().toLowerCase() !== 'success') {
+      throw new HttpException(409, "Erreur lors de l'envoi de l'email d'invitation");
+    }
+    return response.Messages[0].Status.trim().toLowerCase();
   }
 }

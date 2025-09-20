@@ -2,8 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 generator client {
@@ -17,16 +17,6 @@ enum Role {
   agent
 }
 
-enum TypeLigne {
-  LR
-  SC
-  SA
-}
-
-enum SignatureType {
-  controleur
-  chauffeur
-}
 
 model User {
   id             String   @id @default(cuid())
@@ -37,67 +27,5 @@ model User {
   role           Role     @default(agent)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  //Relations
-  formControleur Form[]   @relation("Controleur")
-
-  signatures Signature[]
 }
 
-model Form {
-  id           String   @id @default(cuid())
-  dateControle DateTime @default(now())
-
-  controleurId String //Contrôleur
-  controleur   User   @relation("Controleur", fields: [controleurId], references: [id])
-
-  numeroLigne String
-  typeLigne   TypeLigne
-
-  lieuControle String
-  heurePrevue  DateTime
-  heureReelle  DateTime
-  secteur      String
-  parc         Int
-  nom          String
-  prenom       String
-  email        String   @unique
-
-  ficheHoraire           Boolean?
-  respectItineraire      Boolean?
-  affichageDestination   Boolean?
-  affichageNumeroLigne   Boolean?
-  pictoEnfant            Boolean?
-  tarifAffiche           Boolean?
-  depliantHoraire        Boolean?
-  reglement              Boolean?
-  tenue                  Boolean?
-  carosserie             Boolean?
-  tableauBord            Boolean?
-  sol                    Boolean?
-  temperature            Boolean?
-  luminosite             Boolean?
-  nbreVoyageur           Int
-  nbreVoyageurIrregulier Int
-
-  observation String
-  createdAt   DateTime @default(now())
-
-  //Relation
-  signatures Signature[]
-   @@map("forms")
-}
-
-model Signature {
-  id           String        @id @default(cuid())
-  formId       String
-  form         Form          @relation(fields: [formId], references: [id])
-  type         SignatureType
-  createdAt    DateTime      @default(now())
-  controleurId String?
-  controleur   User?         @relation(fields: [controleurId], references: [id])
-
-  signataireNom String? //Pour le chauffeur externe
-  base64        String
-
-  @@unique([formId, type]) // garantit qu'une seule signature par type pour le formulaire
-}

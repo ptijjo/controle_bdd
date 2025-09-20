@@ -28,6 +28,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "envalid": "^8.1.0",
+    "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
@@ -40,7 +41,8 @@
     "swagger-ui-express": "^5.0.1",
     "typedi": "^0.10.0",
     "winston": "^3.17.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@swc/cli": "^0.7.8",

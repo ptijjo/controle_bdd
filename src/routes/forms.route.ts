@@ -16,9 +16,6 @@ export class FormRoute implements Routes {
   }
 
   private initializeRoutes() {
-    this.router.get(`${this.path}`, AuthMiddleware, RoleGuard(['chef_service']), this.form.getForms);
-    this.router.get(`${this.path}/:id`, AuthMiddleware, RoleGuard(['chef_service']), this.form.getFormById);
     this.router.post(`${this.path}`, AuthMiddleware, RoleGuard(['chef_service','controleur']), ValidationMiddleware(CreateFormDto), this.form.createForm);
-    // this.router.delete(`${this.path}/:id`,AuthMiddleware,RoleGuard(["chef_service"]),);
   }
 }

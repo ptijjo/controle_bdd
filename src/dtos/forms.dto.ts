@@ -1,4 +1,4 @@
-import { TypeLigne } from '@prisma/client';
+import { Type } from 'class-transformer';
 import { IsBoolean, IsDate, IsEmail, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateFormDto {
@@ -7,18 +7,24 @@ export class CreateFormDto {
   public numeroLigne: string;
 
   @IsString()
-  @IsIn(Object.values(TypeLigne))
-  public typeLigne: TypeLigne;
+  @IsIn(['Lr', 'Sa', 'Sc'])
+  public typeLigne: string;
 
   @IsString()
   @IsNotEmpty()
   public lieuControle: string;
 
   @IsDate()
+  @Type(() => Date)
   public heurePrevue: Date;
 
   @IsDate()
+  @Type(() => Date)
   public heureReelle: Date;
+
+  @IsDate()
+  @Type(() => Date)
+  public date: Date;
 
   @IsString()
   @IsNotEmpty()
@@ -106,4 +112,12 @@ export class CreateFormDto {
   @IsString()
   @IsNotEmpty()
   public observation: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'La signature du chauffeur est obligatoire' })
+  public chauffeurSignature: string; // Base64
+
+  @IsString()
+  @IsNotEmpty({ message: 'La signature du contrôleur est obligatoire' })
+  public controllerSignature: string; // Base64
 }
