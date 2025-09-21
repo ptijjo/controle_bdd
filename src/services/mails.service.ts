@@ -551,7 +551,7 @@ export class MailService {
               Name: '',
             },
             {
-              Email: 'bangouraibrahima57@gmail.com',
+              Email: 'aitissadsarah@gmail.com',
               Name: '',
             },
           ],
