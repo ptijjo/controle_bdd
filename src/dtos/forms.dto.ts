@@ -1,5 +1,5 @@
-import { Type } from 'class-transformer';
-import { IsBoolean, IsDate, IsEmail, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsDate, IsEmail, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Matches } from 'class-validator';
 
 export class CreateFormDto {
   @IsString()
@@ -10,29 +10,32 @@ export class CreateFormDto {
   @IsIn(['Lr', 'Sa', 'Sc'])
   public typeLigne: string;
 
+  // @IsString()
+  // @IsNotEmpty()
+  // public lieuControle: string;
+
   @IsString()
-  @IsNotEmpty()
-  public lieuControle: string;
+  @Matches(/^\d{2}:\d{2}$/, { message: 'L’heure doit être au format HH:mm' })
+  @Transform(({ value }) => value?.trim())
+  public heurePrevue: string;
 
-  @IsDate()
-  @Type(() => Date)
-  public heurePrevue: Date;
+  @IsString()
+  @Matches(/^\d{2}:\d{2}$/, { message: 'L’heure doit être au format HH:mm' })
+  @Transform(({ value }) => value?.trim())
+  public heureReelle: string;
 
-  @IsDate()
-  @Type(() => Date)
-  public heureReelle: Date;
-
-  @IsDate()
-  @Type(() => Date)
+  @IsDate({ message: 'date invalide' })
+@Type(() => Date)
   public date: Date;
 
-  @IsString()
-  @IsNotEmpty()
-  public secteur: string;
+  // @IsString()
+  // @IsNotEmpty()
+  // public secteur: string;
 
-  @IsNumber()
-  @IsNotEmpty()
-  public parc: number;
+  // @IsNumber()
+  // @IsNotEmpty()
+  // @Transform(({ value }) => Number(value))
+  // public parc: number;
 
   @IsString()
   @IsNotEmpty()
@@ -103,10 +106,12 @@ export class CreateFormDto {
 
   @IsNumber()
   @IsNotEmpty()
+  @Transform(({ value }) => Number(value))
   public nbreVoyageur: number;
 
   @IsNumber()
   @IsNotEmpty()
+  @Transform(({ value }) => Number(value))
   public nbreVoyageurIrregulier: number;
 
   @IsString()
