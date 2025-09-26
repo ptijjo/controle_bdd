@@ -1,91 +1,214 @@
-    <html>
-      <head>
-        <meta charset="utf-8" />
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { text-align: center; margin-bottom: 30px; }
-          h2 { margin-top: 20px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-          p, td { font-size: 14px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-          td, th { border: 1px solid #ccc; padding: 8px; }
-          .label { font-weight: bold; width: 40%; background: #f9f9f9; }
-          .signature img { border: 1px solid #ccc; width: 200px; height: 100px; object-fit: contain; background: #fff; margin-top: 10px; }
-        </style>
-      </head>
-      <body>
-        <h1>Formulaire de Contrôle</h1>
+<html>
 
-        <h2>Environnement de contrôle</h2>
-        <table>
-          <tr><td class="label">Date</td><td>${form.date || "-"}</td></tr>
-          <tr><td class="label">N° de Ligne</td><td>${form.ligne || "-"}</td></tr>
-          <tr><td class="label">Type de Ligne</td><td>${form.typeLigne || "-"}</td></tr>
-          <tr><td class="label">Heure prévue</td><td>${form.heurePrevue || "-"}</td></tr>
-          <tr><td class="label">Heure réelle</td><td>${form.heureReelle || "-"}</td></tr>
-        </table>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
 
-        <h2>Information du Chauffeur</h2>
-        <table>
-          <tr><td class="label">Nom</td><td>${form.nom || "-"}</td></tr>
-          <tr><td class="label">Prénom</td><td>${form.prenom || "-"}</td></tr>
-          <tr><td class="label">Email</td><td>${form.email || "-"}</td></tr>
-        </table>
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
 
-        <h2>Équipement arrêt</h2>
-        <table>
-          <tr><td class="label">Fiche horaire à l'arrêt</td><td>${form.ficheHoraire ? "Oui" : "Non"}</td></tr>
-        </table>
+    h2 {
+      margin-top: 20px;
+      color: #333;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 5px;
+    }
 
-        <h2>Véhicule</h2>
-        <table>
-          <tr><td class="label">Respect arrêt itinéraire</td><td>${form.respectArret ? "Oui" : "Non"}</td></tr>
-          <tr><td class="label">Affichage destination</td><td>${form.affichageDestination ? "Oui" : "Non"}</td></tr>
-          <tr><td class="label">Affichage N° Ligne</td><td>${form.affichageLigne ? "Oui" : "Non"}</td></tr>
-          <tr><td class="label">Picto transport enfant</td><td>${form.pictoEnfant ? "Oui" : "Non"}</td></tr>
-        </table>
+    p,
+    td {
+      font-size: 14px;
+    }
 
-        <h2>Équipement</h2>
-        <table>
-          <tr><td class="label">Tarif disponible / affichés</td><td>${form.tarifDisponible ? "Oui" : "Non"}</td></tr>
-          <tr><td class="label">Dépliants horaires disponibles</td><td>${form.depliantsHoraires ? "Oui" : "Non"}</td></tr>
-          <tr><td class="label">Règlement</td><td>${form.reglement ? "Oui" : "Non"}</td></tr>
-        </table>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
 
-        <h2>Conducteur</h2>
-        <table>
-          <tr><td class="label">Tenue</td><td>${form.tenue ? "Oui" : "Non"}</td></tr>
-          <tr><td class="label">Carrosserie</td><td>${form.carrosserie ? "Oui" : "Non"}</td></tr>
-          <tr><td class="label">Tableau de bord</td><td>${form.tableauBord ? "Oui" : "Non"}</td></tr>
-          <tr><td class="label">Sol</td><td>${form.sol ? "Oui" : "Non"}</td></tr>
-        </table>
+    td,
+    th {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
 
-        <h2>Confort</h2>
-        <table>
-          <tr><td class="label">Température</td><td>${form.temperature ? "Oui" : "Non"}</td></tr>
-          <tr><td class="label">Luminosité</td><td>${form.luminosite ? "Oui" : "Non"}</td></tr>
-        </table>
+    .label {
+      font-weight: bold;
+      width: 40%;
+      background: #f9f9f9;
+    }
 
-        <h2>Voyageurs</h2>
-        <table>
-          <tr><td class="label">Nombre de Voyageurs</td><td>${form.nbVoyageurs}</td></tr>
-          <tr><td class="label">Nombre de Voyageurs irréguliers</td><td>${form.nbIrreguliers}</td></tr>
-        </table>
+    .signature img {
+      border: 1px solid #ccc;
+      width: 200px;
+      height: 100px;
+      object-fit: contain;
+      background: #fff;
+      margin-top: 10px;
+    }
+  </style>
+</head>
 
-        <h2>Observation</h2>
-        <p>${form.observation || "Aucune observation"}</p>
+<body>
+  <h1>Formulaire de Contrôle</h1>
 
-        <h2>Contrôleur</h2>
-        <p>${controleur}</p>
+  <h2>Environnement de contrôle</h2>
+  <table>
+    <tr>
+      <td class="label">Date</td>
+      <td>${form.date || "-"}</td>
+    </tr>
+    <tr>
+      <td class="label">N° de Ligne</td>
+      <td>${form.ligne || "-"}</td>
+    </tr>
+    <tr>
+      <td class="label">Type de Ligne</td>
+      <td>${form.typeLigne || "-"}</td>
+    </tr>
+    <tr>
+      <td class="label">Heure prévue</td>
+      <td>${form.heurePrevue || "-"}</td>
+    </tr>
+    <tr>
+      <td class="label">Heure réelle</td>
+      <td>${form.heureReelle || "-"}</td>
+    </tr>
+  </table>
 
-        <h2>Signatures</h2>
+  <h2>Information du Chauffeur</h2>
+  <table>
+    <tr>
+      <td class="label">Nom</td>
+      <td>${form.nom || "-"}</td>
+    </tr>
+    <tr>
+      <td class="label">Prénom</td>
+      <td>${form.prenom || "-"}</td>
+    </tr>
+    <tr>
+      <td class="label">Email</td>
+      <td>${form.email || "-"}</td>
+    </tr>
+  </table>
+
+  <h2>Équipement arrêt</h2>
+  <table>
+    <tr>
+      <td class="label">Fiche horaire à l'arrêt</td>
+      <td>${form.ficheHoraire ? "Oui" : "Non"}</td>
+    </tr>
+  </table>
+
+  <h2>Véhicule</h2>
+  <table>
+    <tr>
+      <td class="label">Respect arrêt itinéraire</td>
+      <td>${form.respectArret ? "Oui" : "Non"}</td>
+    </tr>
+    <tr>
+      <td class="label">Affichage destination</td>
+      <td>${form.affichageDestination ? "Oui" : "Non"}</td>
+    </tr>
+    <tr>
+      <td class="label">Affichage N° Ligne</td>
+      <td>${form.affichageLigne ? "Oui" : "Non"}</td>
+    </tr>
+    <tr>
+      <td class="label">Picto transport enfant</td>
+      <td>${form.pictoEnfant ? "Oui" : "Non"}</td>
+    </tr>
+  </table>
+
+  <h2>Équipement</h2>
+  <table>
+    <tr>
+      <td class="label">Tarif disponible / affichés</td>
+      <td>${form.tarifDisponible ? "Oui" : "Non"}</td>
+    </tr>
+    <tr>
+      <td class="label">Dépliants horaires disponibles</td>
+      <td>${form.depliantsHoraires ? "Oui" : "Non"}</td>
+    </tr>
+    <tr>
+      <td class="label">Règlement</td>
+      <td>${form.reglement ? "Oui" : "Non"}</td>
+    </tr>
+  </table>
+
+  <h2>Conducteur</h2>
+  <table>
+    <tr>
+      <td class="label">Tenue</td>
+      <td>${form.tenue ? "Oui" : "Non"}</td>
+    </tr>
+    <tr>
+      <td class="label">Carrosserie</td>
+      <td>${form.carrosserie ? "Oui" : "Non"}</td>
+    </tr>
+    <tr>
+      <td class="label">Tableau de bord</td>
+      <td>${form.tableauBord ? "Oui" : "Non"}</td>
+    </tr>
+    <tr>
+      <td class="label">Sol</td>
+      <td>${form.sol ? "Oui" : "Non"}</td>
+    </tr>
+  </table>
+
+  <h2>Confort</h2>
+  <table>
+    <tr>
+      <td class="label">Température</td>
+      <td>${form.temperature ? "Oui" : "Non"}</td>
+    </tr>
+    <tr>
+      <td class="label">Luminosité</td>
+      <td>${form.luminosite ? "Oui" : "Non"}</td>
+    </tr>
+  </table>
+
+  <h2>Voyageurs</h2>
+  <table>
+    <tr>
+      <td class="label">Nombre de Voyageurs</td>
+      <td>${form.nbVoyageurs}</td>
+    </tr>
+    <tr>
+      <td class="label">Nombre de Voyageurs irréguliers</td>
+      <td>${form.nbIrreguliers}</td>
+    </tr>
+  </table>
+
+  <h2>Observation</h2>
+  <p>${form.observation || "Aucune observation"}</p>
+
+  <h2>Contrôleur</h2>
+  <p>${controleur}</p>
+
+  <h2>Signatures</h2>
+  <table>
+    <tr>
+      <td>
         <div class="signature">
           <p><strong>Signature Chauffeur :</strong></p>
-          <img src="${form.signatureChauffeur}" alt="Signature Chauffeur"/>
+          <img src="${form.signatureChauffeur}" alt="Signature Chauffeur" />
         </div>
-
+      </td>
+      <td>
         <div class="signature">
           <p><strong>Signature Contrôleur :</strong></p>
-          <img src="${form.signatureControleur}" alt="Signature Contrôleur"/>
+          <img src="${form.signatureControleur}" alt="Signature Contrôleur" />
         </div>
-      </body>
-    </html>
+      </td>
+    </tr>
+  </table>
+
+</body>
+
+</html>

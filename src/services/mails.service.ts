@@ -1,6 +1,6 @@
 import { Service } from 'typedi';
 import Mailjet from 'node-mailjet';
-import { EMAIL, MJ_APIKEY_PRIVATE, MJ_APIKEY_PUBLIC } from '@/config';
+import { BCC, EMAIL, MJ_APIKEY_PRIVATE, MJ_APIKEY_PUBLIC } from '@/config';
 import { HttpException } from '../exceptions/httpException';
 import generatePdf from '@/utils/pdfCreator';
 
@@ -548,11 +548,11 @@ export class MailService {
           To: [
             {
               Email: emailChauffeur,
-              Name: '',
-            },
-            {
-              Email: 'aitissadsarah@gmail.com',
-              Name: '',
+            }
+              ],
+              Bcc: [
+               {
+              Email: BCC,
             },
           ],
           Subject: "Compte rendu de contrôle",
