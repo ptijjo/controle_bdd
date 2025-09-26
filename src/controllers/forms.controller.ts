@@ -8,9 +8,12 @@ import { MailService } from '@/services/mails.service';
 import { saveFormToExcel } from '@/utils/saveToExcel';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+import { DownloadFile } from '@/services/file.service';
+import path from 'path';
 
 export class FormController {
   public email = Container.get(MailService);
+  public download = Container.get(DownloadFile)
 
   public createForm = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -31,7 +34,7 @@ export class FormController {
       };
 
       // Vérification signatures présentes
-      if (!formData.controllerSignature || !formData.chauffeurSignature || !formData.nom || !formData.prenom) {
+      if (!formData.controllerSignature || !formData.chauffeurSignature /*|| !formData.nom || !formData.prenom*/) {
         throw new HttpException(400, 'Les deux signatures et le nom du chauffeur sont obligatoires');
       }
 
@@ -54,4 +57,22 @@ export class FormController {
       next(error);
     }
   };
+
+  public downloadFile = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => { 
+    try {
+      const filepath = await this.download.downloadFile();
+
+      res.setHeader('Content-Disposition', `attachment; filename=${path.basename(filepath)}`);
+       res.download(filepath, err => {
+        if (err) {
+          console.error("❌ Erreur lors du téléchargement :", err);
+          next(new HttpException(500, "Erreur lors du téléchargement du fichier"));
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+
+
+  }
 }
