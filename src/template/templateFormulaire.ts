@@ -31,53 +31,53 @@ export const htmlFormulaire = (controleur: string, form: CreateFormDto): string 
 
         <h2>Information du Chauffeur</h2>
         <table>
-          <tr><td class="label">Nom</td><td>${form.nom || '-'}</td></tr>
-          <tr><td class="label">Prénom</td><td>${form.prenom || '-'}</td></tr>
+          <tr><td class="label">Nom</td><td>nom</td></tr>
+          <tr><td class="label">Prénom</td><td>prenom}</td></tr>
           <tr><td class="label">Email</td><td>${form.email || '-'}</td></tr>
         </table>
 
         <h2>Équipement arrêt</h2>
         <table>
-          <tr><td class="label">Fiche horaire à l'arrêt</td><td>${form.ficheHoraire ? 'Oui' : 'Non'}</td></tr>
+          <tr><td class="label">Fiche horaire à l'arrêt</td><td>ficheHoraire</td></tr>
         </table>
 
         <h2>Véhicule</h2>
         <table>
-          <tr><td class="label">Respect arrêt itinéraire</td><td>${form.respectItineraire ? 'Oui' : 'Non'}</td></tr>
-          <tr><td class="label">Affichage destination</td><td>${form.affichageDestination ? 'Oui' : 'Non'}</td></tr>
-          <tr><td class="label">Affichage N° Ligne</td><td>${form.affichageNumeroLigne ? 'Oui' : 'Non'}</td></tr>
-          <tr><td class="label">Picto transport enfant</td><td>${form.pictoEnfant ? 'Oui' : 'Non'}</td></tr>
+          <tr><td class="label">Respect arrêt itinéraire</td><td>respectItineraire}</td></tr>
+          <tr><td class="label">Affichage destination</td><td>affichageDestination</td></tr>
+          <tr><td class="label">Affichage N° Ligne</td><td>affichageNumeroLigne</td></tr>
+          <tr><td class="label">Picto transport enfant</td><td>pictoEnfant</td></tr>
         </table>
 
         <h2>Équipement</h2>
         <table>
-          <tr><td class="label">Tarif disponible / affichés</td><td>${form.tarifAffiche ? 'Oui' : 'Non'}</td></tr>
-          <tr><td class="label">Dépliants horaires disponibles</td><td>${form.depliantHoraire ? 'Oui' : 'Non'}</td></tr>
-          <tr><td class="label">Règlement</td><td>${form.reglement ? 'Oui' : 'Non'}</td></tr>
+          <tr><td class="label">Tarif disponible / affichés</td><td>tarifAffiche</td></tr>
+          <tr><td class="label">Dépliants horaires disponibles</td><td>depliantHoraire</td></tr>
+          <tr><td class="label">Règlement</td><td>reglement</td></tr>
         </table>
 
         <h2>Conducteur</h2>
         <table>
-          <tr><td class="label">Tenue</td><td>${form.tenue ? 'Oui' : 'Non'}</td></tr>
-          <tr><td class="label">Carrosserie</td><td>${form.carosserie ? 'Oui' : 'Non'}</td></tr>
-          <tr><td class="label">Tableau de bord</td><td>${form.tableauBord ? 'Oui' : 'Non'}</td></tr>
-          <tr><td class="label">Sol</td><td>${form.sol ? 'Oui' : 'Non'}</td></tr>
+          <tr><td class="label">Tenue</td><td>tenue</td></tr>
+          <tr><td class="label">Carrosserie</td><td>carosserie</td></tr>
+          <tr><td class="label">Tableau de bord</td><td>tableauBord</td></tr>
+          <tr><td class="label">Sol</td><td>sol</td></tr>
         </table>
 
         <h2>Confort</h2>
         <table>
-          <tr><td class="label">Température</td><td>${form.temperature ? 'Oui' : 'Non'}</td></tr>
-          <tr><td class="label">Luminosité</td><td>${form.luminosite ? 'Oui' : 'Non'}</td></tr>
+          <tr><td class="label">Température</td><td>temperature</td></tr>
+          <tr><td class="label">Luminosité</td><td>luminosite</td></tr>
         </table>
 
         <h2>Voyageurs</h2>
         <table>
-          <tr><td class="label">Nombre de Voyageurs</td><td>${form.nbreVoyageur}</td></tr>
-          <tr><td class="label">Nombre de Voyageurs irréguliers</td><td>${form.nbreVoyageurIrregulier}</td></tr>
+          <tr><td class="label">Nombre de Voyageurs</td><td>nbreVoyageur</td></tr>
+          <tr><td class="label">Nombre de Voyageurs irréguliers</td><td>nbreVoyageurIrregulier</td></tr>
         </table>
 
         <h2>Observation</h2>
-        <p>${form.observation || 'Aucune observation'}</p>
+        <p>'Aucune observation'</p>
 
         <h2>Contrôleur</h2>
         <p>${controleur}</p>
