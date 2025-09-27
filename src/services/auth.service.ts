@@ -1,7 +1,7 @@
 import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { Service } from 'typedi';
-import { SECRET_KEY } from '@config';
+import { SECRET_EXPIRES, SECRET_KEY } from '@config';
 import { AuthDto, CreateUserDto } from '@dtos/users.dto';
 import { HttpException } from '@exceptions/httpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
@@ -45,7 +45,7 @@ export class AuthService {
   public createToken(user: User): TokenData {
     const dataStoredInToken: DataStoredInToken = { id: user.id };
     const secretKey: string = SECRET_KEY;
-    const expiresIn: number = 60 * 60;
+    const expiresIn: number = SECRET_EXPIRES as unknown as number;
 
     return { expiresIn, token: sign(dataStoredInToken, secretKey, { expiresIn }) };
   }
