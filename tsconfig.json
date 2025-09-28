@@ -2,7 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "target": "es2020",
-    "lib": ["ES2020", "esnext.asynciterable"],
+    "lib": ["ES2020", "esnext.asynciterable","dom"],
     "typeRoots": ["node_modules/@types"],
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,

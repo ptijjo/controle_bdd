@@ -1,19 +1,24 @@
 module.exports = {
   apps: [
     {
-      name: "backform",
-      script: "node_modules/.bin/next",
-      args: "start -p 3010",
-      exec_mode: "cluster",
+      name: 'backform',
+      script: 'dist/server.js',
+      exec_mode: 'cluster',
       instances: 2,
       autorestart: true,
       watch: false,
-      max_memory_restart: "1G",
-      output: "./logs/access.log",   // stdout
-      error: "./logs/error.log",     // stderr
+      ignore_watch: ['node_modules', 'logs'],
+      max_memory_restart: '1G',
+      merge_logs: true,
+      output: './logs/access.log',
+      error: './logs/error.log',
+      env: {
+        NODE_ENV: 'development',
+        PORT: 8585,
+      },
       env_production: {
-        NODE_ENV: "production",
-        PORT: 8585
+        NODE_ENV: 'production',
+        PORT: 8585,
       },
     },
   ],
