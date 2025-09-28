@@ -17,11 +17,11 @@ const getAuthorization = (req: RequestWithUser) => {
 
 export const AuthMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
   try {
-    const Authorization = getAuthorization(req);
-
+    const Authorization:string = getAuthorization(req);
+    
     if (Authorization) {
       const { id } = verify(Authorization, SECRET_KEY) as DataStoredInToken;
-
+console.log(id)
 
       const users = prisma.user;
       const findUser = await users.findUnique({ where: { id: String(id) } });

@@ -8,19 +8,20 @@ export class CreateFormDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(['Lr', 'Sa', 'Sc','Lu'])
+  // @IsIn(['Lr', 'Sa', 'Sc','Lu'])
   public typeLigne: string;
 
   @IsString()
-  @IsIn(['casas', 'rgeFluo57', 'casc','forbus','apeiMoselle','hombourgHaut','autres'])
+  // @IsIn(['casas', 'rgeFluo57', 'casc','forbus','apeiMoselle','hombourgHaut','autres'])
   public client: string;
 
   @IsString()
-  @IsIn(['beau', 'pluvieux'])
+  // @IsIn(['beau', 'pluvieux'])
   public meteo: string;
 
+   @IsOptional()
   @IsString()
-  @IsIn(['transavold', 'transcool'])
+  // @IsIn(['transavold', 'transcool'])
   public ligne: string;
 
   @IsString()
