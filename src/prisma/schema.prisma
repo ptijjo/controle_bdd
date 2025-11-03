@@ -26,6 +26,20 @@ model User {
   prenom         String
   role           Role     @default(agent)
   createdAt      DateTime @default(now())
+   failedLoginAttempts    Int        @default(0)
+   lockedUntil            DateTime?
   updatedAt      DateTime @updatedAt
+  
+//Relations
+  LoginAttempts LoginAttempts[]
+}
+
+model LoginAttempts {
+  id        String   @id @default(cuid())
+  emailName String
+  email     User     @relation(fields: [emailName], references: [email], onDelete: Cascade)
+  success   Boolean
+  ipAddress String
+  createdAt DateTime @default(now())
 }
 

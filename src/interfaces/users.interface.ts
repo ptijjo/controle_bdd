@@ -7,6 +7,8 @@ export interface User {
   nom: string;
   prenom: string;
   role: Role;
+  failedLoginAttempts: number;
+  lockedUntil: Date;
   createdAt: Date;
   updatedAt: Date;
 }

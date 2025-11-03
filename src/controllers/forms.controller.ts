@@ -10,14 +10,14 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { DownloadFile } from '@/services/file.service';
 import path from 'path';
+import { Role } from '@prisma/client';
 
 export class FormController {
   public email = Container.get(MailService);
-  public download = Container.get(DownloadFile)
+  public download = Container.get(DownloadFile);
 
   public createForm = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
     try {
-    
       // Transformation du JSON en instance DTO
       const formData = plainToInstance(CreateFormDto, req.body);
 
@@ -58,21 +58,19 @@ export class FormController {
     }
   };
 
-  public downloadFile = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => { 
+  public downloadFile = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const filepath = await this.download.downloadFile();
 
       res.setHeader('Content-Disposition', `attachment; filename=${path.basename(filepath)}`);
-       res.download(filepath, err => {
+      res.download(filepath, err => {
         if (err) {
-          console.error("❌ Erreur lors du téléchargement :", err);
-          next(new HttpException(500, "Erreur lors du téléchargement du fichier"));
+          console.error('❌ Erreur lors du téléchargement :', err);
+          next(new HttpException(500, 'Erreur lors du téléchargement du fichier'));
         }
       });
     } catch (error) {
       next(error);
     }
-
-
-  }
+  };
 }

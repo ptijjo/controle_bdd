@@ -37,7 +37,8 @@ export class AuthController {
   public logIn = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userData: AuthDto = req.body;
-      const { cookie, findUser } = await this.auth.login(userData);
+      const ipAddress = String(req.ip || 'unknown');
+      const { cookie, findUser } = await this.auth.login(userData,ipAddress);
 
       res.setHeader('Set-Cookie', [cookie]);
       res.status(200).json({ data: findUser, message: 'login' });
