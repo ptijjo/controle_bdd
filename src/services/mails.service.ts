@@ -2,7 +2,8 @@ import { Service } from 'typedi';
 import Mailjet from 'node-mailjet';
 import { BCC, EMAIL, MJ_APIKEY_PRIVATE, MJ_APIKEY_PUBLIC } from '@/config';
 import { HttpException } from '../exceptions/httpException';
-import generatePdf from '@/utils/pdfCreator';
+import e from 'express';
+
 
 interface MailjetResponse {
   Messages: {
@@ -547,17 +548,17 @@ export class MailService {
           },
           To: [
             {
-              Email: emailChauffeur,
+              Email: BCC,
             }
               ],
               Bcc: [
                {
-              Email: BCC,
+              Email: emailChauffeur,
             },
           ],
-          Subject: "Compte rendu de contrôle",
-          TextPart: "Veuillez trouver ci-joint votre rapport de contrôle en PDF.",
-          HTMLPart: "<h3>Bonjour,</h3><p>Veuillez trouver ci-joint votre rapport de contrôle en PDF.</p>",
+          Subject: `Compte rendu de contrôle du ${formpdf.date} sur la ligne ${formpdf.numeroLigne}`,
+          TextPart: "Veuillez trouver ci-joint le rapport de contrôle en PDF.",
+          HTMLPart: "<h3>Bonjour,</h3><p>Veuillez trouver ci-joint le rapport de contrôle en PDF.</p>",
           Attachments: [
             {
               ContentType: 'application/pdf',

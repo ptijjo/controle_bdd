@@ -12,7 +12,7 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
   const workbook = new ExcelJS.Workbook();
   let sheet: ExcelJS.Worksheet;
 
-  // Crée le dossier s’il n’existe pas
+  // Crée le dossier s'il n'existe pas
   if (!fs.existsSync(controleDir)) {
     fs.mkdirSync(controleDir, { recursive: true });
   }
@@ -33,16 +33,65 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
   sheet.columns = [
     { header: 'ID', key: 'id', width: 36 },
     { header: 'Date', key: 'date', width: 15 },
+    { header: 'Heure Prévue', key: 'heurePrevue', width: 12 },
+    { header: 'Heure Réelle', key: 'heureReelle', width: 12 },
+    { header: 'Lieu de Contrôle', key: 'lieuControle', width: 25 },
+    
+    // Chauffeur
+    { header: 'Nom Chauffeur', key: 'nom', width: 20 },
+    { header: 'Prénom Chauffeur', key: 'prenom', width: 20 },
+    { header: 'Email Chauffeur', key: 'email', width: 30 },
+    
+    // Arrêt de bus
+    { header: 'Fiche Horaire', key: 'ficheHoraire', width: 15 },
+    { header: 'Panneau Arrêt', key: 'panneauArret', width: 15 },
+    { header: 'Nom Arrêt', key: 'nomArret', width: 25 },
+    
+    // Ligne de bus
     { header: 'N° Ligne', key: 'numeroLigne', width: 15 },
-    { header: 'Type de Ligne', key: 'typeLigne', width: 20 },
-    { header: 'Nom', key: 'nom', width: 20 },
-    { header: 'Prénom', key: 'prenom', width: 20 },
-    { header: 'Prénom Controleur', key: 'prenomControleur', width: 20 },
-    { header: 'Nom Controleur', key: 'nomControleur', width: 20 },
-    { header: 'Email', key: 'email', width: 25 },
-    { header: 'Observation', key: 'observation', width: 40 },
-    { header: 'Signature Chauffeur', key: 'signatureChauffeur', width: 20 },
-    { header: 'Signature Contrôleur', key: 'signatureControleur', width: 20 },
+    
+    // Client
+    { header: 'Client', key: 'client', width: 20 },
+    { header: 'Ligne Casas', key: 'ligneCasas', width: 15 },
+    { header: 'Ligne RGE', key: 'ligneRge', width: 15 },
+    { header: 'Ligne CASC', key: 'ligneCasc', width: 15 },
+    { header: 'N° Ligne CASC LR', key: 'numLigneCascLr', width: 15 },
+    { header: 'N° Ligne CASC SA', key: 'numLigneCascSA', width: 15 },
+    { header: 'N° Ligne CASC SC', key: 'numLigneCascSc', width: 15 },
+    { header: 'N° Ligne RGE LR', key: 'numLigneRgeLr', width: 15 },
+    { header: 'N° Ligne RGE SA', key: 'numLigneRgeSa', width: 15 },
+    { header: 'N° Ligne RGE SC', key: 'numLigneRgeSc', width: 15 },
+    { header: 'N° Ligne Transavold', key: 'numLigneTransavold', width: 15 },
+    { header: 'N° Ligne Transchool', key: 'numLigneTranschool', width: 15 },
+    
+    // Météo
+    { header: 'Météo', key: 'meteo', width: 15 },
+    
+    // Car et trajet
+    { header: 'Parc', key: 'parc', width: 10 },
+    { header: 'Respect Itinéraire', key: 'respectItineraire', width: 18 },
+    { header: 'Affichage Destination', key: 'affichageDestination', width: 22 },
+    { header: 'Affichage N° Ligne', key: 'affichageNumeroLigne', width: 20 },
+    { header: 'Picto Enfant', key: 'pictoEnfant', width: 15 },
+    { header: 'Tarif Affiché', key: 'tarifAffiche', width: 15 },
+    { header: 'Dépliant Horaire', key: 'depliantHoraire', width: 17 },
+    { header: 'Règlement', key: 'reglement', width: 15 },
+    { header: 'Tenue', key: 'tenue', width: 12 },
+    { header: 'Carrosserie', key: 'carosserie', width: 15 },
+    { header: 'Tableau de Bord', key: 'tableauBord', width: 17 },
+    
+    // Conditions de transport
+    { header: 'Sol', key: 'sol', width: 10 },
+    { header: 'Température', key: 'temperature', width: 15 },
+    { header: 'Luminosité', key: 'luminosite', width: 15 },
+    { header: 'Observation Conditions', key: 'observationConditions', width: 30 },
+    
+    // Voyageurs
+    { header: 'Nombre Voyageurs', key: 'nbreVoyageur', width: 18 },
+    { header: 'Nombre Voyageurs Irréguliers', key: 'nbreVoyageurIrregulier', width: 28 },
+    
+    // Contrôleur
+    { header: 'Nom Contrôleur', key: 'nomControleur', width: 20 },
   ];
 
   console.log('➡️ Nombre de lignes AVANT ajout:', sheet.rowCount);
@@ -50,20 +99,69 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
   // Générer un ID unique pour ce formulaire
   const formId = uuidv4();
 
-  // Ajouter une nouvelle ligne
+  // Ajouter une nouvelle ligne avec toutes les données du formulaire
   sheet.addRow({
     id: formId,
     date: form.date?.toISOString(),
-    numeroLigne: form.numeroLigne,
-    typeLigne: form.typeLigne,
-    // nom: form.nom,
-    // prenom: form.prenom,
+    heurePrevue: form.heurePrevue,
+    heureReelle: form.heureReelle,
+    lieuControle: form.lieuControle,
+    
+    // Chauffeur
+    nom: form.nom,
+    prenom: form.prenom,
     email: form.email,
+    
+    // Arrêt de bus
+    ficheHoraire: form.ficheHoraire,
+    panneauArret: form.panneauArret,
+    nomArret: form.nomArret,
+    
+    // Ligne de bus
+    numeroLigne: form.numeroLigne,
+    
+    // Client
+    client: form.client,
+    ligneCasas: form.ligneCasas,
+    ligneRge: form.ligneRge,
+    ligneCasc: form.ligneCasc,
+    numLigneCascLr: form.numLigneCascLr,
+    numLigneCascSA: form.numLigneCascSA,
+    numLigneCascSc: form.numLigneCascSc,
+    numLigneRgeLr: form.numLigneRgeLr,
+    numLigneRgeSa: form.numLigneRgeSa,
+    numLigneRgeSc: form.numLigneRgeSc,
+    numLigneTransavold: form.numLigneTransavold,
+    numLigneTranschool: form.numLigneTranschool,
+    
+    // Météo
+    meteo: form.meteo,
+    
+    // Car et trajet
+    parc: form.parc,
+    respectItineraire: form.respectItineraire,
+    affichageDestination: form.affichageDestination,
+    affichageNumeroLigne: form.affichageNumeroLigne,
+    pictoEnfant: form.pictoEnfant,
+    tarifAffiche: form.tarifAffiche,
+    depliantHoraire: form.depliantHoraire,
+    reglement: form.reglement,
+    tenue: form.tenue,
+    carosserie: form.carosserie,
+    tableauBord: form.tableauBord,
+    
+    // Conditions de transport
+    sol: form.sol,
+    temperature: form.temperature,
+    luminosite: form.luminosite,
+    observationConditions: form.observationConditions,
+    
+    // Voyageurs
+    nbreVoyageur: form.nbreVoyageur,
+    nbreVoyageurIrregulier: form.nbreVoyageurIrregulier,
+    
+    // Contrôleur
     nomControleur: controleur.nom,
-    prenomControleur: controleur.prenom,
-    // observation: form.observation,
-    signatureChauffeur: form.chauffeurSignature ? 'Oui' : 'Non',
-    signatureControleur: form.controllerSignature ? 'Oui' : 'Non',
   });
 
   console.log('✅ Nombre de lignes APRÈS ajout:', sheet.rowCount);

@@ -10,7 +10,7 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { DownloadFile } from '@/services/file.service';
 import path from 'path';
-import { Role } from '@prisma/client';
+
 
 export class FormController {
   public email = Container.get(MailService);
@@ -27,7 +27,7 @@ export class FormController {
         res.status(400).json({ message: 'Validation failed', errors });
       }
 
-      const user = req.user.nom + ' ' + req.user.prenom;
+      const user = req.user.nom ;
       const userExcel = {
         nom: req.user.nom,
         prenom: req.user.prenom,
@@ -39,9 +39,9 @@ export class FormController {
       }
 
       //Vérification si email present
-      if (!formData.email) {
-        throw new HttpException(400, "L'email du chauffeur est obligatoire");
-      }
+      // if (!formData.email) {
+      //   throw new HttpException(400, "L'email du chauffeur est obligatoire");
+      // }
 
       const pdfBuffer = await generatePdf(user, formData);
       const pdfBuffer64 = pdfBuffer.toString('base64');
