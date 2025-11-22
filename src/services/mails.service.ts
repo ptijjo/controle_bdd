@@ -3,6 +3,7 @@ import Mailjet from 'node-mailjet';
 import { BCC, EMAIL, MJ_APIKEY_PRIVATE, MJ_APIKEY_PUBLIC } from '@/config';
 import { HttpException } from '../exceptions/httpException';
 import e from 'express';
+import { CreateFormDto } from '@/dtos/forms.dto';
 
 
 interface MailjetResponse {
@@ -533,41 +534,48 @@ export class MailService {
 </body> `;
   }
 
-  public async sendResume(emailChauffeur: string, formpdf: any): Promise<string> {
+  public async sendResume(emailChauffeur: string | undefined, formpdf: any): Promise<string> {
     const mailjet = new Mailjet({
       apiKey: MJ_APIKEY_PUBLIC,
       apiSecret: MJ_APIKEY_PRIVATE,
     });
-      
-    const request = await mailjet.post('send', { version: 'v3.1' }).request({
-      Messages: [
+    
+   
+    
+    // Configuration de base du message
+    const messageConfig: any = {
+      From: {
+        Email: EMAIL,
+        Name: 'Transdev Grand Est',
+      },
+      To: [
         {
-          From: {
-            Email: EMAIL,
-            Name: 'Transdev Grand Est',
-          },
-          To: [
-            {
-              Email: BCC,
-            }
-              ],
-              Bcc: [
-               {
-              Email: emailChauffeur,
-            },
-          ],
-          Subject: `Compte rendu de contrôle du ${formpdf.date} sur la ligne ${formpdf.numeroLigne}`,
-          TextPart: "Veuillez trouver ci-joint le rapport de contrôle en PDF.",
-          HTMLPart: "<h3>Bonjour,</h3><p>Veuillez trouver ci-joint le rapport de contrôle en PDF.</p>",
-          Attachments: [
-            {
-              ContentType: 'application/pdf',
-              Filename: 'document.pdf',
-              Base64Content: formpdf,
-            },
-          ],
+          Email: BCC, // Chef de secteur en destinataire principal
+        }
+      ],
+      Subject: `Compte rendu de contrôle du ${new Date().toLocaleDateString('fr-FR')}`,
+      TextPart: "Veuillez trouver ci-joint le rapport de contrôle en PDF.",
+      HTMLPart: "<h3>Bonjour,</h3><p>Veuillez trouver ci-joint le rapport de contrôle en PDF.</p>",
+      Attachments: [
+        {
+          ContentType: 'application/pdf',
+          Filename: `controle_${new Date().toLocaleDateString('fr-FR').replace(/\//g, '-')}.pdf`,
+          Base64Content: formpdf,
         },
       ],
+    };
+
+    // Ajouter le chauffeur en Bcc uniquement si l'email est fourni
+    if (emailChauffeur && emailChauffeur.trim() !== '') {
+      messageConfig.Bcc = [
+        {
+          Email: emailChauffeur,
+        },
+      ];
+    }
+      
+    const request = await mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [messageConfig],
     });
 
     const response = request.body as unknown as MailjetResponse;

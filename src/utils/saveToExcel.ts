@@ -31,7 +31,7 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
   // Assurer que les colonnes sont toujours définies
 
   sheet.columns = [
-    { header: 'ID', key: 'id', width: 36 },
+    // { header: 'ID', key: 'id', width: 36 },
     { header: 'Date', key: 'date', width: 15 },
     { header: 'Heure Prévue', key: 'heurePrevue', width: 12 },
     { header: 'Heure Réelle', key: 'heureReelle', width: 12 },
@@ -39,16 +39,19 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
     
     // Chauffeur
     { header: 'Nom Chauffeur', key: 'nom', width: 20 },
-    { header: 'Prénom Chauffeur', key: 'prenom', width: 20 },
-    { header: 'Email Chauffeur', key: 'email', width: 30 },
+    // { header: 'Prénom Chauffeur', key: 'prenom', width: 20 },
+    // { header: 'Email Chauffeur', key: 'email', width: 30 },
     
     // Arrêt de bus
     { header: 'Fiche Horaire', key: 'ficheHoraire', width: 15 },
-    { header: 'Panneau Arrêt', key: 'panneauArret', width: 15 },
-    { header: 'Nom Arrêt', key: 'nomArret', width: 25 },
+    { header: 'Cadre Affichage', key: 'cadreAffichage', width: 15 },
+    { header: 'État Général', key: 'etatGeneral', width: 15 },
+    { header: 'Type Arrêt', key: 'typeArret', width: 20 },
+    { header: 'Zébra', key: 'zebra', width: 15 },
+    { header: 'Observation Arrêt', key: 'observationArret', width: 30 },
     
     // Ligne de bus
-    { header: 'N° Ligne', key: 'numeroLigne', width: 15 },
+    // { header: 'N° Ligne', key: 'numeroLigne', width: 15 },
     
     // Client
     { header: 'Client', key: 'client', width: 20 },
@@ -69,22 +72,30 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
     
     // Car et trajet
     { header: 'Parc', key: 'parc', width: 10 },
-    { header: 'Respect Itinéraire', key: 'respectItineraire', width: 18 },
+    // { header: 'Respect Itinéraire', key: 'respectItineraire', width: 18 },
     { header: 'Affichage Destination', key: 'affichageDestination', width: 22 },
     { header: 'Affichage N° Ligne', key: 'affichageNumeroLigne', width: 20 },
     { header: 'Picto Enfant', key: 'pictoEnfant', width: 15 },
     { header: 'Tarif Affiché', key: 'tarifAffiche', width: 15 },
     { header: 'Dépliant Horaire', key: 'depliantHoraire', width: 17 },
     { header: 'Règlement', key: 'reglement', width: 15 },
-    { header: 'Tenue', key: 'tenue', width: 12 },
+    // { header: 'Tenue', key: 'tenue', width: 12 },
     { header: 'Carrosserie', key: 'carosserie', width: 15 },
-    { header: 'Tableau de Bord', key: 'tableauBord', width: 17 },
+    { header: 'Observation Car', key: 'observationCar', width: 30 },
+    
+    // Billetique
+    { header: 'Billetique Électronique', key: 'billetiqueElectronique', width: 22 },
+    { header: 'Billetique Manuelle', key: 'billetiqueManuelle', width: 20 },
+    { header: 'Fond de Caisse', key: 'fondDeCaisse', width: 18 },
     
     // Conditions de transport
+    { header: 'Tableau de Bord', key: 'tableauBord', width: 17 },
     { header: 'Sol', key: 'sol', width: 10 },
-    { header: 'Température', key: 'temperature', width: 15 },
-    { header: 'Luminosité', key: 'luminosite', width: 15 },
-    { header: 'Observation Conditions', key: 'observationConditions', width: 30 },
+    { header: 'Vitres', key: 'vitres', width: 12 },
+    { header: 'Sièges', key: 'sieges', width: 12 },
+    // { header: 'Température', key: 'temperature', width: 15 },
+    // { header: 'Luminosité', key: 'luminosite', width: 15 },
+    { header: 'Observation Conditions Véhicule', key: 'observationConditionsVehicule', width: 35 },
     
     // Voyageurs
     { header: 'Nombre Voyageurs', key: 'nbreVoyageur', width: 18 },
@@ -92,6 +103,7 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
     
     // Contrôleur
     { header: 'Nom Contrôleur', key: 'nomControleur', width: 20 },
+    // { header: 'Prénom Contrôleur', key: 'prenomControleur', width: 20 },
   ];
 
   console.log('➡️ Nombre de lignes AVANT ajout:', sheet.rowCount);
@@ -102,23 +114,27 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
   // Ajouter une nouvelle ligne avec toutes les données du formulaire
   sheet.addRow({
     id: formId,
-    date: form.date?.toISOString(),
+    date: form.date ? new Date(form.date).toLocaleDateString('fr-FR') : '',
     heurePrevue: form.heurePrevue,
     heureReelle: form.heureReelle,
     lieuControle: form.lieuControle,
     
     // Chauffeur
     nom: form.nom,
-    prenom: form.prenom,
-    email: form.email,
+    // prenom: form.prenom,
+    // email: form.email,
+    
     
     // Arrêt de bus
     ficheHoraire: form.ficheHoraire,
-    panneauArret: form.panneauArret,
-    nomArret: form.nomArret,
+    cadreAffichage: form.cadreAffichage,
+    etatGeneral: form.etatGeneral,
+    typeArret: form.typeArret,
+    zebra: form.zebra,
+    observationArret: form.observationArret,
     
-    // Ligne de bus
-    numeroLigne: form.numeroLigne,
+    // // Ligne de bus
+    // numeroLigne: form.numeroLigne,
     
     // Client
     client: form.client,
@@ -139,22 +155,30 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
     
     // Car et trajet
     parc: form.parc,
-    respectItineraire: form.respectItineraire,
+    // respectItineraire: form.respectItineraire,
     affichageDestination: form.affichageDestination,
     affichageNumeroLigne: form.affichageNumeroLigne,
     pictoEnfant: form.pictoEnfant,
     tarifAffiche: form.tarifAffiche,
     depliantHoraire: form.depliantHoraire,
     reglement: form.reglement,
-    tenue: form.tenue,
+    // tenue: form.tenue,
     carosserie: form.carosserie,
-    tableauBord: form.tableauBord,
+    observationCar: form.observationCar,
+    
+    // Billetique
+    billetiqueElectronique: form.billetiqueElectronique,
+    billetiqueManuelle: form.billetiqueManuelle,
+    fondDeCaisse: form.fondDeCaisse,
     
     // Conditions de transport
+    tableauBord: form.tableauBord,
     sol: form.sol,
-    temperature: form.temperature,
-    luminosite: form.luminosite,
-    observationConditions: form.observationConditions,
+    vitres: form.vitres,
+    sieges: form.sieges,
+    // temperature: form.temperature,
+    // luminosite: form.luminosite,
+    observationConditionsVehicule: form.observationConditionsVehicule,
     
     // Voyageurs
     nbreVoyageur: form.nbreVoyageur,
@@ -162,9 +186,10 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
     
     // Contrôleur
     nomControleur: controleur.nom,
+    // prenomControleur: controleur.prenom,
   });
 
-  console.log('✅ Nombre de lignes APRÈS ajout:', sheet.rowCount);
+  // console.log('✅ Nombre de lignes APRÈS ajout:', sheet.rowCount);
 
   // Sauvegarder le fichier
   await workbook.xlsx.writeFile(EXCEL_FILE);
@@ -174,7 +199,7 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
   await checkWb.xlsx.readFile(EXCEL_FILE);
   const checkSheet = checkWb.getWorksheet('Controles');
 
-  console.log('📊 Nombre de lignes DANS LE FICHIER:', checkSheet?.rowCount);
+  // console.log('📊 Nombre de lignes DANS LE FICHIER:', checkSheet?.rowCount);
 
   checkSheet?.eachRow((row, rowNumber) => {
     console.log(`Row ${rowNumber}:`, row.values);
