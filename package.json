@@ -4,6 +4,9 @@
   "description": "TypeScript + Prisma + MySQL + Express API Server",
   "author": "",
   "license": "ISC",
+  "prisma": {
+    "schema": "src/prisma/schema.prisma"
+  },
   "scripts": {
     "start": "npm run build && cross-env NODE_ENV=production node dist/server.js",
     "dev": "cross-env NODE_ENV=development nodemon",
