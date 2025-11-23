@@ -534,7 +534,7 @@ export class MailService {
 </body> `;
   }
 
-  public async sendResume(emailChauffeur: string | undefined, formpdf: any): Promise<string> {
+  public async sendResume(formData: CreateFormDto, formpdf: any): Promise<string> {
     const mailjet = new Mailjet({
       apiKey: MJ_APIKEY_PUBLIC,
       apiSecret: MJ_APIKEY_PRIVATE,
@@ -553,7 +553,7 @@ export class MailService {
           Email: BCC, // Chef de secteur en destinataire principal
         }
       ],
-      Subject: `Compte rendu de contrôle du ${new Date().toLocaleDateString('fr-FR')}`,
+      Subject: `Compte rendu de contrôle du ${new Date().toLocaleDateString('fr-FR')} de ${formData.nom}`,
       TextPart: "Veuillez trouver ci-joint le rapport de contrôle en PDF.",
       HTMLPart: "<h3>Bonjour,</h3><p>Veuillez trouver ci-joint le rapport de contrôle en PDF.</p>",
       Attachments: [
@@ -566,10 +566,10 @@ export class MailService {
     };
 
     // Ajouter le chauffeur en Bcc uniquement si l'email est fourni
-    if (emailChauffeur && emailChauffeur.trim() !== '') {
+    if (formData.email && formData.email.trim() !== '') {
       messageConfig.Bcc = [
         {
-          Email: emailChauffeur,
+          Email: formData.email,
         },
       ];
     }

@@ -47,7 +47,7 @@ export class FormController {
       const pdfBuffer64 = pdfBuffer.toString('base64');
 
       //On envoi le form en pdf par mail au chef de secteur (et au chauffeur en Bcc si email fourni)
-      const envoiPdf = await this.email.sendResume(formData.email, pdfBuffer64);
+      const envoiPdf = await this.email.sendResume(formData, pdfBuffer64);
 
       const saveExcel = await saveFormToExcel(userExcel, formData);
 

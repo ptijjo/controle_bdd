@@ -201,8 +201,8 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
 
   // console.log('📊 Nombre de lignes DANS LE FICHIER:', checkSheet?.rowCount);
 
-  checkSheet?.eachRow((row, rowNumber) => {
-    console.log(`Row ${rowNumber}:`, row.values);
-  });
+  // checkSheet?.eachRow((row, rowNumber) => {
+  //   console.log(`Row ${rowNumber}:`, row.values);
+  // });
   return EXCEL_FILE;
 }
