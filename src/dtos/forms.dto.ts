@@ -1,5 +1,5 @@
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsDate, IsEmail, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Matches } from 'class-validator';
+import { IsDate, IsEmail, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Matches } from 'class-validator';
 
 export class CreateFormDto {
   /**-------------------------------------------------------------------- */
@@ -107,9 +107,9 @@ export class CreateFormDto {
   @IsIn(['Lr', 'Sa', 'Sc'])
   public ligneCasc: string;
 
-    @IsString()
   @IsOptional()
-  @IsIn([["HH1", "HH2", "HH3"]])
+  @IsString()
+  @IsIn(["HH1", "HH2", "HH3"])
   public numLigneHH?: string;
 
   @IsOptional()
