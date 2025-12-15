@@ -1,6 +1,6 @@
 import { Service } from 'typedi';
 import Mailjet from 'node-mailjet';
-import { BCC, EMAIL, MJ_APIKEY_PRIVATE, MJ_APIKEY_PUBLIC } from '@/config';
+import { Alexander, Carine, EMAIL, Marin, MJ_APIKEY_PRIVATE, MJ_APIKEY_PUBLIC, Sebastien } from '@/config';
 import { HttpException } from '../exceptions/httpException';
 import e from 'express';
 import { CreateFormDto } from '@/dtos/forms.dto';
@@ -553,8 +553,18 @@ export class MailService {
       },
       To: [
         {
-          Email: BCC, // Chef de secteur en destinataire principal
-        }
+              Email: Marin, // Chef de secteur en destinataire principal
+          },
+          {
+            Email: Alexander, // Responsable Merlebach
+          },
+          {
+            Email: Sebastien, // Responsable sarreguemines
+          },
+          {
+            Email: Carine, // Responsable Saint-avold
+          }
+
       ],
       Subject: `Compte rendu de contrôle du ${new Date().toLocaleDateString('fr-FR')} de ${formData.nom}`,
       TextPart: "Veuillez trouver ci-joint le rapport de contrôle en PDF.",
