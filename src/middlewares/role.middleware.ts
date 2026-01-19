@@ -24,7 +24,6 @@ export const RoleGuard = (requiredRoles = []) => {
       const userRoles = validateUserRoles(user.role);
 
       const hasRole = requiredRoles.some(role => {
-        console.log('Role autorisé :', role);
         return userRoles.includes(role);
       });
 

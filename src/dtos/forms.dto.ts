@@ -276,6 +276,10 @@ export class CreateFormDto {
   @IsString()
   @IsIn(['Conforme', 'Non conforme', 'Non observable'])
   public fondDeCaisse: string;
+
+  @IsString()
+  @IsNotEmpty()
+  public observationBilletique: string;
   /**-------------------------------------------------------------------- */
 
   //conditions de transport

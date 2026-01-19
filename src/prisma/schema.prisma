@@ -17,20 +17,19 @@ enum Role {
   agent
 }
 
-
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  password       String
-  nom            String
-  prenom         String
-  role           Role     @default(agent)
-  createdAt      DateTime @default(now())
-   failedLoginAttempts    Int        @default(0)
-   lockedUntil            DateTime?
-  updatedAt      DateTime @updatedAt
-  
-//Relations
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  password            String
+  nom                 String
+  prenom              String
+  role                Role      @default(agent)
+  createdAt           DateTime  @default(now())
+  failedLoginAttempts Int       @default(0)
+  lockedUntil         DateTime?
+  updatedAt           DateTime  @updatedAt
+
+  //Relations
   LoginAttempts LoginAttempts[]
 }
 
@@ -43,3 +42,11 @@ model LoginAttempts {
   createdAt DateTime @default(now())
 }
 
+model IpBlock {
+  id             String    @id @default(cuid())
+  ipAddress      String    @unique
+  failedAttempts Int       @default(0)
+  blockedUntil   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}

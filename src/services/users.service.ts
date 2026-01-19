@@ -41,9 +41,7 @@ export class UserService {
 
     //sendEmail
     const link = `${FRONT_END}/${tokenInvitation}`;
-    const sendEmail = await sendMailActivation(invitationData.email, link);
-    console.log(`sendEmail : "${sendEmail.trim().toLowerCase()}"`);
-
+    await sendMailActivation(invitationData.email, link);
 
     return link;
   }

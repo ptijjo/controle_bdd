@@ -1,7 +1,7 @@
 import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { Service } from 'typedi';
-import { NUMBER_OF_FAIL_BEFORE_LOCK, SECRET_EXPIRES, SECRET_KEY, TIME_LOCK } from '@config';
+import { NUMBER_OF_FAIL_BEFORE_LOCK, SECRET_KEY, TIME_LOCK } from '@config';
 import { AuthDto, CreateUserDto } from '@dtos/users.dto';
 import { HttpException } from '@exceptions/httpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
@@ -23,8 +23,21 @@ export class AuthService {
   }
 
   public async login(userData: AuthDto, ipAddressData: string): Promise<{ cookie: string; findUser: User }> {
+    // Vérifier si l'IP est bloquée pour tentatives d'emails inexistants
+    const ipBlock = await prisma.ipBlock.findUnique({ where: { ipAddress: ipAddressData } });
+    if (ipBlock && ipBlock.blockedUntil && ipBlock.blockedUntil > new Date()) {
+      throw new HttpException(403, `IP temporairement bloquée jusqu'à ${ipBlock.blockedUntil.toLocaleString('fr-FR')}`);
+    }
+
     const findUser: User = await this.users.findUnique({ where: { email: userData.email } });
-    if (!findUser) throw new HttpException(409, `Identifiants incorrects`);
+    
+    // Si l'email n'existe pas, tracker la tentative et bloquer après 3 échecs
+    if (!findUser) {
+      // handleNonExistentEmail peut lever une exception si l'IP est bloquée
+      await this.handleNonExistentEmail(ipAddressData);
+      // Si pas bloquée, lever l'exception générique
+      throw new HttpException(409, `Identifiants incorrects`);
+    }
 
     //  Vérifier si le compte est temporairement verrouillé
     if (findUser.lockedUntil && findUser.lockedUntil > new Date()) {
@@ -85,5 +98,56 @@ export class AuthService {
 
   public createCookie(tokenData: TokenData): string {
     return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn};SameSite=None; Secure`;
+  }
+
+  private async handleNonExistentEmail(ipAddress: string): Promise<void> {
+    const MAX_ATTEMPTS = 3;
+    const BLOCK_DURATION_MINUTES = Number(TIME_LOCK) || 30; // Utilise TIME_LOCK ou 30 min par défaut
+
+    // Chercher ou créer l'enregistrement IP
+    let ipBlock = await prisma.ipBlock.findUnique({ where: { ipAddress } });
+
+    if (!ipBlock) {
+      // Créer un nouvel enregistrement pour cette IP
+      ipBlock = await prisma.ipBlock.create({
+        data: {
+          ipAddress,
+          failedAttempts: 1,
+        },
+      });
+    } else {
+      // Si le blocage a expiré, réinitialiser
+      if (ipBlock.blockedUntil && ipBlock.blockedUntil <= new Date()) {
+        ipBlock = await prisma.ipBlock.update({
+          where: { ipAddress },
+          data: {
+            failedAttempts: 1,
+            blockedUntil: null,
+          },
+        });
+      } else {
+        // Incrémenter les tentatives
+        const newFailedAttempts = ipBlock.failedAttempts + 1;
+        let blockedUntil: Date | null = null;
+
+        // Bloquer après 3 échecs
+        if (newFailedAttempts >= MAX_ATTEMPTS) {
+          blockedUntil = new Date(Date.now() + BLOCK_DURATION_MINUTES * 60 * 1000);
+        }
+
+        ipBlock = await prisma.ipBlock.update({
+          where: { ipAddress },
+          data: {
+            failedAttempts: newFailedAttempts,
+            blockedUntil,
+          },
+        });
+      }
+    }
+
+    // Si l'IP vient d'être bloquée, lever une exception
+    if (ipBlock.blockedUntil && ipBlock.blockedUntil > new Date()) {
+      throw new HttpException(403, `IP temporairement bloquée jusqu'à ${ipBlock.blockedUntil.toLocaleString('fr-FR')} après ${MAX_ATTEMPTS} tentatives avec des emails inexistants`);
+    }
   }
 }

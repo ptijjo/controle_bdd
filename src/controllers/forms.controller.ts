@@ -10,6 +10,7 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { DownloadFile } from '@/services/file.service';
 import path from 'path';
+import { logger } from '@/utils/logger';
 
 
 export class FormController {
@@ -64,7 +65,7 @@ export class FormController {
       res.setHeader('Content-Disposition', `attachment; filename=${path.basename(filepath)}`);
       res.download(filepath, err => {
         if (err) {
-          console.error('❌ Erreur lors du téléchargement :', err);
+          logger.error('Erreur lors du téléchargement du fichier:', err);
           next(new HttpException(500, 'Erreur lors du téléchargement du fichier'));
         }
       });

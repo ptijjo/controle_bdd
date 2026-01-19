@@ -4,52 +4,125 @@ export const htmlFormulaire = (controleur: string, form: CreateFormDto): string 
   return `
    <!DOCTYPE html>
       <html>
-      <head>
+      <head></head>
         <meta charset="utf-8" />
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { text-align: center; margin-bottom: 30px; }
-          h2 { margin-top: 20px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-          p, td { font-size: 14px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-          td, th { border: 1px solid #ccc; padding: 8px; }
-          .label { font-weight: bold; width: 40%; background: #f9f9f9; }
-          .signatures-container { display: flex; justify-content: space-around; gap: 20px; margin-top: 360px; }
-          .signature { flex: 1; text-align: center; }
-          .signature img { border: 1px solid #ccc; width: 200px; height: 100px; object-fit: contain; background: #fff; margin-top: 10px; }
+          @page { size: A4; margin: 10mm; }
+          body { 
+            font-family: Arial, sans-serif; 
+            font-size: 11px;
+            padding: 5px;
+            margin: 0;
+          }
+          h1 { 
+            text-align: center; 
+            margin: 5px 0 10px 0;
+            font-size: 18px;
+          }
+          h2 { 
+            margin-top: 8px;
+            margin-bottom: 4px;
+            color: #333; 
+            border-bottom: 1px solid #ddd; 
+            padding-bottom: 2px;
+            font-size: 12px;
+            page-break-inside: avoid;
+          }
+          p, td { font-size: 10px; }
+          table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 3px;
+            margin-bottom: 5px;
+            page-break-inside: avoid;
+          }
+          td, th { 
+            border: 1px solid #ccc; 
+            padding: 4px 6px;
+            font-size: 10px;
+          }
+          .label { 
+            font-weight: bold; 
+            width: 35%; 
+            background: #f9f9f9; 
+          }
+          .two-columns {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+            margin-bottom: 5px;
+          }
+          .column {
+            flex: 1;
+          }
+          .signatures-container { 
+            display: flex; 
+            justify-content: space-around; 
+            gap: 20px; 
+            margin-top: 15px;
+            page-break-inside: avoid;
+          }
+          .signature { 
+            flex: 1; 
+            text-align: center;
+          }
+          .signature p {
+            margin: 5px 0;
+            font-size: 10px;
+          }
+          .signature img { 
+            border: 1px solid #ccc; 
+            width: 150px; 
+            height: 60px; 
+            object-fit: contain; 
+            background: #fff; 
+            margin-top: 5px;
+          }
+          .compact-table {
+            margin-top: 2px;
+            margin-bottom: 3px;
+          }
+          .compact-table td {
+            padding: 3px 5px;
+          }
         </style>
       </head>
       <body>
         <h1>Formulaire de Contrôle</h1>
 
-        <h2>Environnement de contrôle</h2>
-        <table>
-          <tr><td class="label">Date</td><td>${form.date ? new Date(form.date).toLocaleDateString('fr-FR') : '-'}</td></tr>
-          <tr><td class="label">Heure prévue</td><td>${form.heurePrevue || '-'}</td></tr>
-          <tr><td class="label">Heure réelle</td><td>${form.heureReelle || '-'}</td></tr>
-          <tr><td class="label">Lieu de contrôle</td><td>${form.lieuControle || '-'}</td></tr>
-          <tr><td class="label">Météo</td><td>${form.meteo === 'beau' ? 'Beau temps' : form.meteo === 'pluvieux' ? 'Pluvieux' : '-'}</td></tr>
-        </table>
-
-        
-        <h2>Information du Chauffeur</h2>
-        <table>
-          <tr><td class="label">Nom</td><td>${form.nom || '-'}</td></tr>
-        </table>
-
+        <div class="two-columns">
+          <div class="column">
+            <h2>Environnement de contrôle</h2>
+            <table class="compact-table">
+              <tr><td class="label">Date</td><td>${form.date ? new Date(form.date).toLocaleDateString('fr-FR') : '-'}</td></tr>
+              <tr><td class="label">Heure prévue</td><td>${form.heurePrevue || '-'}</td></tr>
+              <tr><td class="label">Heure réelle</td><td>${form.heureReelle || '-'}</td></tr>
+              <tr><td class="label">Lieu</td><td>${form.lieuControle || '-'}</td></tr>
+              <tr><td class="label">Météo</td><td>${form.meteo === 'beau' ? 'Beau' : form.meteo === 'pluvieux' ? 'Pluvieux' : '-'}</td></tr>
+            </table>
+          </div>
+          <div class="column">
+            <h2>Chauffeur</h2>
+            <table class="compact-table">
+              <tr><td class="label">Nom</td><td>${form.nom || '-'}</td></tr>
+              <tr><td class="label">Prénom</td><td>${form.prenom || '-'}</td></tr>
+              ${form.email ? `<tr><td class="label">Email</td><td>${form.email}</td></tr>` : ''}
+            </table>
+          </div>
+        </div>
 
         <h2>Équipement arrêt</h2>
-        <table>
-          <tr><td class="label">Fiche horaire à l'arrêt</td><td>${form.ficheHoraire || '-'}</td></tr>
-          <tr><td class="label">Cadre d'affichage</td><td>${form.cadreAffichage || '-'}</td></tr>
+        <table class="compact-table">
+          <tr><td class="label">Fiche horaire</td><td>${form.ficheHoraire || '-'}</td></tr>
+          <tr><td class="label">Cadre affichage</td><td>${form.cadreAffichage || '-'}</td></tr>
           <tr><td class="label">État général</td><td>${form.etatGeneral || '-'}</td></tr>
           <tr><td class="label">Type arrêt</td><td>${form.typeArret || '-'}</td></tr>
           <tr><td class="label">Zébra</td><td>${form.zebra || '-'}</td></tr>
-          <tr><td class="label">Observation arrêt</td><td>${form.observationArret || '-'}</td></tr>
+          ${form.observationArret ? `<tr><td class="label">Observation arrêt</td><td>${form.observationArret}</td></tr>` : ''}
         </table>
 
         <h2>Ligne de bus</h2>
-        <table>
+        <table class="compact-table">
           <tr><td class="label">Client</td><td>${form.client || '-'}</td></tr>
           ${form.client === 'casas' && form.ligneCasas ? `<tr><td class="label">Ligne Casas</td><td>${form.ligneCasas}</td></tr>` : ''}
           ${form.client === 'casas' && form.ligneCasas === 'transavold' && form.numLigneTransavold ? `<tr><td class="label">N° Ligne Transavold</td><td>${form.numLigneTransavold}</td></tr>` : ''}
@@ -66,61 +139,74 @@ export const htmlFormulaire = (controleur: string, form: CreateFormDto): string 
           ${form.client === 'casc' && form.ligneCasc === 'Sc' && form.numLigneCascSc ? `<tr><td class="label">N° Ligne CASC SC</td><td>${form.numLigneCascSc}</td></tr>` : ''}
         </table>
 
-        <h2>Véhicule</h2>
-        <table>
-          <tr><td class="label">N° Parc</td><td>${form.parc || '-'}</td></tr>
-          <tr><td class="label">Affichage destination</td><td>${form.affichageDestination || '-'}</td></tr>
-          <tr><td class="label">Affichage N° Ligne</td><td>${form.affichageNumeroLigne || '-'}</td></tr>
-          <tr><td class="label">Picto transport enfant</td><td>${form.pictoEnfant || '-'}</td></tr>
-        </table>
+        <div class="two-columns">
+          <div class="column">
+            <h2>Véhicule</h2>
+            <table class="compact-table">
+              <tr><td class="label">N° Parc</td><td>${form.parc || '-'}</td></tr>
+              <tr><td class="label">Affichage destination</td><td>${form.affichageDestination || '-'}</td></tr>
+              <tr><td class="label">Affichage N° Ligne</td><td>${form.affichageNumeroLigne || '-'}</td></tr>
+              <tr><td class="label">Picto enfant</td><td>${form.pictoEnfant || '-'}</td></tr>
+            </table>
+          </div>
+          <div class="column">
+            <h2>Équipement</h2>
+            <table class="compact-table">
+              <tr><td class="label">Tarif affiché</td><td>${form.tarifAffiche || '-'}</td></tr>
+              <tr><td class="label">Dépliants horaires</td><td>${form.depliantHoraire || '-'}</td></tr>
+              <tr><td class="label">Règlement</td><td>${form.reglement || '-'}</td></tr>
+            </table>
+          </div>
+        </div>
 
-        <h2>Équipement</h2>
-        <table>
-          <tr><td class="label">Tarif disponible / affichés</td><td>${form.tarifAffiche || '-'}</td></tr>
-          <tr><td class="label">Dépliants horaires disponibles</td><td>${form.depliantHoraire || '-'}</td></tr>
-          <tr><td class="label">Règlement</td><td>${form.reglement || '-'}</td></tr>
-        </table>
-
-        <h2>Conducteur</h2>
-        <table>
-          <tr><td class="label">Carrosserie</td><td>${form.carosserie || '-'}</td></tr>
-          <tr><td class="label">Observation car</td><td>${form.observationCar || '-'}</td></tr>
-        </table>
+        <div class="two-columns">
+          <div class="column">
+            <h2>Carosserie</h2>
+            <table class="compact-table">
+              <tr><td class="label">Carrosserie</td><td>${form.carosserie || '-'}</td></tr>
+              ${form.observationCar ? `<tr><td class="label">Observation car</td><td>${form.observationCar}</td></tr>` : ''}
+            </table>
+          </div>
+          <div class="column">
+            <h2>Voyageurs</h2>
+            <table class="compact-table">
+              <tr><td class="label">Nb Voyageurs</td><td>${form.nbreVoyageur || '-'}</td></tr>
+              <tr><td class="label">Nb Irréguliers</td><td>${form.nbreVoyageurIrregulier || '-'}</td></tr>
+            </table>
+          </div>
+        </div>
 
         <h2>Billetique</h2>
-        <table>
+        <table class="compact-table">
           <tr><td class="label">Billetique électronique</td><td>${form.billetiqueElectronique || '-'}</td></tr>
           <tr><td class="label">Billetique manuelle</td><td>${form.billetiqueManuelle || '-'}</td></tr>
           <tr><td class="label">Fond de caisse</td><td>${form.fondDeCaisse || '-'}</td></tr>
+          ${form.observationBilletique ? `<tr><td class="label">Observation billetique</td><td>${form.observationBilletique}</td></tr>` : ''}
         </table>
 
         <h2>Conditions de transport</h2>
-        <table>
+        <table class="compact-table">
           <tr><td class="label">Tableau de bord</td><td>${form.tableauBord || '-'}</td></tr>
           <tr><td class="label">Sol</td><td>${form.sol || '-'}</td></tr>
           <tr><td class="label">Vitres</td><td>${form.vitres || '-'}</td></tr>
           <tr><td class="label">Sièges</td><td>${form.sieges || '-'}</td></tr>
-          <tr><td class="label">Observations conditions véhicule</td><td>${form.observationConditionsVehicule || '-'}</td></tr>
+          ${form.observationConditionsVehicule ? `<tr><td class="label">Observations véhicule</td><td>${form.observationConditionsVehicule}</td></tr>` : ''}
         </table>
 
-        <h2>Voyageurs</h2>
-        <table>
-          <tr><td class="label">Nombre de Voyageurs</td><td>${form.nbreVoyageur || '-'}</td></tr>
-          <tr><td class="label">Nombre de Voyageurs irréguliers</td><td>${form.nbreVoyageurIrregulier || '-'}</td></tr>
-        </table>
-
-        <h2>Contrôleur</h2>
-        <p>${controleur}</p>
+        <div class="two-columns" style="margin-top: 10px;">
+          <div class="column">
+            <p><strong>Contrôleur :</strong> ${controleur}</p>
+          </div>
+        </div>
 
         <h2>Signatures</h2>
         <div class="signatures-container">
           <div class="signature">
-            <p><strong>Signature Chauffeur :</strong></p>
+            <p><strong>Signature Chauffeur</strong></p>
             <img src="${form.chauffeurSignature}" alt="Signature Chauffeur"/>
           </div>
-
           <div class="signature">
-            <p><strong>Signature Contrôleur :</strong></p>
+            <p><strong>Signature Contrôleur</strong></p>
             <img src="${form.controllerSignature}" alt="Signature Contrôleur"/>
           </div>
         </div>

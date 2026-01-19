@@ -20,7 +20,6 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
   //On vérifie si le fichier existe
   if (fs.existsSync(EXCEL_FILE)) {
     //charrger le fichier existant
-    console.log('📂 Sauvegarde dans :', EXCEL_FILE);
     await workbook.xlsx.readFile(EXCEL_FILE);
     // Vérifier si la feuille "Controles" existe
     sheet = workbook.getWorksheet('Controles') || workbook.addWorksheet('Controles');
@@ -106,8 +105,6 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
     // { header: 'Prénom Contrôleur', key: 'prenomControleur', width: 20 },
   ];
 
-  console.log('➡️ Nombre de lignes AVANT ajout:', sheet.rowCount);
-
   // Générer un ID unique pour ce formulaire
   const formId = uuidv4();
 
@@ -189,20 +186,8 @@ export async function saveFormToExcel(controleur: { nom: string; prenom: string 
     // prenomControleur: controleur.prenom,
   });
 
-  // console.log('✅ Nombre de lignes APRÈS ajout:', sheet.rowCount);
-
   // Sauvegarder le fichier
   await workbook.xlsx.writeFile(EXCEL_FILE);
 
-  // Relire le fichier pour vérifier
-  const checkWb = new ExcelJS.Workbook();
-  await checkWb.xlsx.readFile(EXCEL_FILE);
-  const checkSheet = checkWb.getWorksheet('Controles');
-
-  // console.log('📊 Nombre de lignes DANS LE FICHIER:', checkSheet?.rowCount);
-
-  // checkSheet?.eachRow((row, rowNumber) => {
-  //   console.log(`Row ${rowNumber}:`, row.values);
-  // });
   return EXCEL_FILE;
 }

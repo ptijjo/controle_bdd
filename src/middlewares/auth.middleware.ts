@@ -4,6 +4,7 @@ import { SECRET_KEY } from '@config';
 import { HttpException } from '@exceptions/httpException';
 import { DataStoredInToken, RequestWithUser } from '@interfaces/auth.interface';
 import prisma from '@/utils/prisma';
+import { logger } from '@/utils/logger';
 
 const getAuthorization = (req: RequestWithUser) => {
   const coockie = req.cookies['Authorization'];
@@ -21,7 +22,6 @@ export const AuthMiddleware = async (req: RequestWithUser, res: Response, next: 
     
     if (Authorization) {
       const { id } = verify(Authorization, SECRET_KEY) as DataStoredInToken;
-console.log(id)
 
       const users = prisma.user;
       const findUser = await users.findUnique({ where: { id: String(id) } });
@@ -36,7 +36,7 @@ console.log(id)
       next(new HttpException(404, 'Authentication token missing'));
     }
   } catch (error) {
-    console.error('AuthMiddleware error:', error);
+    logger.error('AuthMiddleware error:', error);
     next(new HttpException(401, 'Wrong authentication token'));
   }
 };

@@ -540,11 +540,6 @@ export class MailService {
       apiSecret: MJ_APIKEY_PRIVATE,
     });
     
-    // console.log('📧 Tentative d\'envoi d\'email...');
-    // console.log('📧 Email expéditeur:', EMAIL);
-    // console.log('📧 Email destinataire (BCC):', BCC);
-    // console.log('📧 Email chauffeur (Bcc):', formData.email || 'Non fourni');
-    
     // Configuration de base du message
     const messageConfig: any = {
       From: {
@@ -552,7 +547,7 @@ export class MailService {
         Name: 'Transdev Grand Est',
       },
       To: [
-        {
+        /*{
               Email: Marin, // Chef de secteur en destinataire principal
           },
           {
@@ -563,6 +558,9 @@ export class MailService {
           },
           {
             Email: Carine, // Responsable Saint-avold
+          }*/
+          {
+            Email: 'ptijjo@hotmail.com',
           }
 
       ],
@@ -587,26 +585,16 @@ export class MailService {
       ];
     }
     
-    console.log('📧 Configuration du message:', JSON.stringify({
-      from: messageConfig.From,
-      to: messageConfig.To,
-      bcc: messageConfig.Bcc,
-      subject: messageConfig.Subject
-    }, null, 2));
-      
     const request = await mailjet.post('send', { version: 'v3.1' }).request({
       Messages: [messageConfig],
     });
 
     const response = request.body as unknown as MailjetResponse;
-    
-    console.log('📧 Réponse Mailjet:', JSON.stringify(response, null, 2));
 
     if (response.Messages[0].Status.trim().toLowerCase() !== 'success') {
       throw new HttpException(409, "Erreur lors de l'envoi de l'email d'invitation");
     }
     
-    console.log('✅ Email envoyé avec succès !');
     return response.Messages[0].Status.trim().toLowerCase();
   }
 }

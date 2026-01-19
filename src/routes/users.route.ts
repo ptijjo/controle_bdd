@@ -19,7 +19,7 @@ export class UserRoute implements Routes {
     this.router.get(`${this.path}`,AuthMiddleware,RoleGuard(["chef_service"]), this.user.getUsers);
     this.router.get(`${this.path}/:id`,AuthMiddleware,RoleGuard(["chef_service"]), this.user.getUserById);
     this.router.get(`${this.path}_me`,AuthMiddleware, this.user.getConnected);
-    this.router.post(`${this.path}`,/*AuthMiddleware,RoleGuard(["chef_service"]),*/ this.user.inviteUser);
+    this.router.post(`${this.path}`,AuthMiddleware,RoleGuard(["chef_service","controleur"]), this.user.inviteUser);
     this.router.put(`${this.path}/:id`,AuthMiddleware,RoleGuard(["chef_service"]), ValidationMiddleware(CreateUserDto, true), this.user.updateUser);
     this.router.delete(`${this.path}/:id`,AuthMiddleware,RoleGuard(["chef_service"]), this.user.deleteUser);
   }
