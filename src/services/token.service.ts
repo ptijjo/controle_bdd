@@ -13,7 +13,7 @@ export class TokenService {
 
       return decodedToken;
     } catch (error) {
-      throw new HttpException(400, error);
+      throw new HttpException(400, 'Token d\'invitation invalide ou expiré');
     }
   }
 }

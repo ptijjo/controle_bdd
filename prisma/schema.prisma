@@ -3,12 +3,11 @@
 
 datasource db {
   provider = "sqlite"
-  url      = "file:../../prisma/dev.db"
 }
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../../node_modules/.prisma/client"
+  output   = "../src/generated/prisma"
 }
 
 enum Role {

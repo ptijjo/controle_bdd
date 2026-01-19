@@ -6,6 +6,7 @@ import { AuthService } from '@services/auth.service';
 import { AuthDto, CreateUserDto } from '@/dtos/users.dto';
 import { TokenService } from '@/services/token.service';
 import { HttpException } from '@/exceptions/httpException';
+import { securityLogger, SecurityAction } from '@/utils/securityLogger';
 
 export class AuthController {
   public auth = Container.get(AuthService);
@@ -28,6 +29,16 @@ export class AuthController {
       // Appel du service pour créer l'utilisateur
       const signUpUserData: User = await this.auth.signup(userData);
 
+      // Log de la création de compte
+      const ipAddress = String(req.ip || 'unknown');
+      securityLogger.logAuth(
+        SecurityAction.SIGNUP,
+        signUpUserData.email,
+        ipAddress,
+        true,
+        { userId: signUpUserData.id, role: signUpUserData.role }
+      );
+
       res.status(201).json({ data: signUpUserData, message: 'signup' });
     } catch (error) {
       next(error);
@@ -38,11 +49,29 @@ export class AuthController {
     try {
       const userData: AuthDto = req.body;
       const ipAddress = String(req.ip || 'unknown');
-      const { cookie, findUser } = await this.auth.login(userData,ipAddress);
+      const { cookie, findUser } = await this.auth.login(userData, ipAddress);
+
+      // Log de la connexion réussie
+      securityLogger.logAuth(
+        SecurityAction.LOGIN_SUCCESS,
+        findUser.email,
+        ipAddress,
+        true,
+        { userId: findUser.id, role: findUser.role }
+      );
 
       res.setHeader('Set-Cookie', [cookie]);
       res.status(200).json({ data: findUser, message: 'login' });
     } catch (error) {
+      // Log de la connexion échouée
+      const ipAddress = String(req.ip || 'unknown');
+      securityLogger.logAuth(
+        SecurityAction.LOGIN_FAILED,
+        req.body.email || 'unknown',
+        ipAddress,
+        false,
+        { error: error instanceof Error ? error.message : 'Unknown error' }
+      );
       next(error);
     }
   };
@@ -50,7 +79,17 @@ export class AuthController {
   public logOut = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userData: User = req.user;
+      const ipAddress = String(req.ip || 'unknown');
       const logOutUserData: User = await this.auth.logout(userData);
+
+      // Log de la déconnexion
+      securityLogger.logAuth(
+        SecurityAction.LOGOUT,
+        logOutUserData.email,
+        ipAddress,
+        true,
+        { userId: logOutUserData.id }
+      );
 
       res.setHeader('Set-Cookie', ['Authorization=; Max-age=0']);
       res.status(200).json({ data: logOutUserData, message: 'logout' });

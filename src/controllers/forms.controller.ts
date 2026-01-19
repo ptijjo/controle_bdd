@@ -11,6 +11,7 @@ import { validate } from 'class-validator';
 import { DownloadFile } from '@/services/file.service';
 import path from 'path';
 import { logger } from '@/utils/logger';
+import { securityLogger, SecurityAction } from '@/utils/securityLogger';
 
 
 export class FormController {
@@ -26,6 +27,7 @@ export class FormController {
       const errors = await validate(formData);
       if (errors.length > 0) {
         res.status(400).json({ message: 'Validation failed', errors });
+        return;
       }
 
       const user = req.user.nom ;
@@ -38,6 +40,27 @@ export class FormController {
       if (!formData.controllerSignature || !formData.chauffeurSignature /*|| !formData.nom || !formData.prenom*/) {
         throw new HttpException(400, 'Les deux signatures et le nom du chauffeur sont obligatoires');
       }
+
+      // Validation du format et de la taille des signatures base64
+      const MAX_SIGNATURE_SIZE = 500 * 1024; // 500KB max par signature
+      const base64Regex = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/i;
+      
+      const validateSignature = (signature: string, name: string) => {
+        // Vérifier le format base64 (avec ou sans préfixe data URL)
+        const base64Data = signature.includes(',') ? signature.split(',')[1] : signature;
+        if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
+          throw new HttpException(400, `Format de signature invalide pour ${name}`);
+        }
+        
+        // Vérifier la taille (approximative : base64 est ~33% plus grand que l'original)
+        const estimatedSize = (base64Data.length * 3) / 4;
+        if (estimatedSize > MAX_SIGNATURE_SIZE) {
+          throw new HttpException(400, `Signature ${name} trop volumineuse (max 500KB)`);
+        }
+      };
+
+      validateSignature(formData.controllerSignature, 'contrôleur');
+      validateSignature(formData.chauffeurSignature, 'chauffeur');
 
       //Vérification si email present
       // if (!formData.email) {
@@ -52,6 +75,19 @@ export class FormController {
 
       const saveExcel = await saveFormToExcel(userExcel, formData);
 
+      // Log de la création du formulaire
+      const ipAddress = String(req.ip || 'unknown');
+      securityLogger.logFormAction(
+        SecurityAction.FORM_CREATED,
+        req.user,
+        ipAddress,
+        {
+          lieuControle: formData.lieuControle,
+          date: formData.date,
+          client: formData.client,
+        }
+      );
+
       res.status(201).json({ data: { envoiPdf, saveExcel }, message: 'Formulaire crée avec succès' });
     } catch (error) {
       next(error);
@@ -61,6 +97,18 @@ export class FormController {
   public downloadFile = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const filepath = await this.download.downloadFile();
+      const ipAddress = String(req.ip || 'unknown');
+
+      // Log du téléchargement
+      securityLogger.logFormAction(
+        SecurityAction.FILE_DOWNLOADED,
+        req.user,
+        ipAddress,
+        {
+          filename: path.basename(filepath),
+          filepath,
+        }
+      );
 
       res.setHeader('Content-Disposition', `attachment; filename=${path.basename(filepath)}`);
       res.download(filepath, err => {

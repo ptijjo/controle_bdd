@@ -13,7 +13,15 @@ export class DownloadFile {
         
          //Vérification du fichier sur le serveur
       // Utiliser process.cwd() pour être cohérent avec saveToExcel
-      const filePath = path.join(process.cwd(), 'controle', filename);
+      const controleDir = path.resolve(process.cwd(), 'controle');
+      const filePath = path.join(controleDir, filename);
+
+      // Protection contre path traversal : vérifier que le chemin résolu est bien dans le répertoire autorisé
+      const resolvedPath = path.resolve(filePath);
+      if (!resolvedPath.startsWith(controleDir)) {
+        logger.error('Tentative d\'accès non autorisé au fichier:', resolvedPath);
+        throw new HttpException(403, 'Accès non autorisé');
+      }
 
           try {
       await fs.access(filePath);

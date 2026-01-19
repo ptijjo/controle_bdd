@@ -7,6 +7,7 @@ import { HttpException } from '@exceptions/httpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
 import { User } from '@interfaces/users.interface';
 import prisma from '@/utils/prisma';
+import { securityLogger, SecurityAction } from '@/utils/securityLogger';
 
 @Service()
 export class AuthService {
@@ -26,6 +27,11 @@ export class AuthService {
     // Vérifier si l'IP est bloquée pour tentatives d'emails inexistants
     const ipBlock = await prisma.ipBlock.findUnique({ where: { ipAddress: ipAddressData } });
     if (ipBlock && ipBlock.blockedUntil && ipBlock.blockedUntil > new Date()) {
+      securityLogger.logSecurityEvent(
+        SecurityAction.IP_BLOCKED,
+        ipAddressData,
+        { email: userData.email, blockedUntil: ipBlock.blockedUntil }
+      );
       throw new HttpException(403, `IP temporairement bloquée jusqu'à ${ipBlock.blockedUntil.toLocaleString('fr-FR')}`);
     }
 
@@ -59,6 +65,13 @@ export class AuthService {
       if (failed >= Number(NUMBER_OF_FAIL_BEFORE_LOCK)) {
         lockedUntil = new Date(Date.now() + Number(TIME_LOCK) * 60 * 1000); // verrouillage 30 min
         failed = 0;
+        
+        // Log du verrouillage de compte
+        securityLogger.logSecurityEvent(
+          SecurityAction.ACCOUNT_LOCKED,
+          ipAddressData,
+          { email: findUser.email, userId: findUser.id, lockedUntil, failedAttempts: failed }
+        );
       }
 
       await prisma.user.update({
@@ -97,7 +110,7 @@ export class AuthService {
   }
 
   public createCookie(tokenData: TokenData): string {
-    return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn};SameSite=None; Secure`;
+    return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn}; SameSite=Lax; Secure`;
   }
 
   private async handleNonExistentEmail(ipAddress: string): Promise<void> {
@@ -133,6 +146,13 @@ export class AuthService {
         // Bloquer après 3 échecs
         if (newFailedAttempts >= MAX_ATTEMPTS) {
           blockedUntil = new Date(Date.now() + BLOCK_DURATION_MINUTES * 60 * 1000);
+          
+          // Log du blocage d'IP
+          securityLogger.logSecurityEvent(
+            SecurityAction.IP_BLOCKED,
+            ipAddress,
+            { failedAttempts: newFailedAttempts, blockedUntil }
+          );
         }
 
         ipBlock = await prisma.ipBlock.update({

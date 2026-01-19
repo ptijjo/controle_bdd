@@ -5,6 +5,7 @@ import { HttpException } from '@exceptions/httpException';
 import { DataStoredInToken, RequestWithUser } from '@interfaces/auth.interface';
 import prisma from '@/utils/prisma';
 import { logger } from '@/utils/logger';
+import { securityLogger, SecurityAction } from '@/utils/securityLogger';
 
 const getAuthorization = (req: RequestWithUser) => {
   const coockie = req.cookies['Authorization'];
@@ -27,16 +28,34 @@ export const AuthMiddleware = async (req: RequestWithUser, res: Response, next: 
       const findUser = await users.findUnique({ where: { id: String(id) } });
 
       if (!findUser) {
+        const ipAddress = String(req.ip || 'unknown');
+        securityLogger.logSecurityEvent(
+          SecurityAction.INVALID_TOKEN,
+          ipAddress,
+          { tokenId: String(id), reason: 'User not found' }
+        );
         throw new HttpException(401, 'Wrong authentication token');
       }
 
       req.user = findUser;
       next();
     } else {
+      const ipAddress = String(req.ip || 'unknown');
+      securityLogger.logSecurityEvent(
+        SecurityAction.UNAUTHORIZED_ACCESS,
+        ipAddress,
+        { reason: 'Missing authentication token', path: req.path }
+      );
       next(new HttpException(404, 'Authentication token missing'));
     }
   } catch (error) {
     logger.error('AuthMiddleware error:', error);
+    const ipAddress = String(req.ip || 'unknown');
+    securityLogger.logSecurityEvent(
+      SecurityAction.INVALID_TOKEN,
+      ipAddress,
+      { error: error instanceof Error ? error.message : 'Unknown error', path: req.path }
+    );
     next(new HttpException(401, 'Wrong authentication token'));
   }
 };

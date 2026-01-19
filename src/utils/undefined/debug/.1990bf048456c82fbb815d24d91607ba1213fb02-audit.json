@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": false,
+        "amount": 30
+    },
+    "auditLog": "C:\\dev\\controleur\\controle_bdd\\src\\utils\\undefined\\debug\\.1990bf048456c82fbb815d24d91607ba1213fb02-audit.json",
+    "files": [
+        {
+            "date": 1768834799265,
+            "name": "C:\\dev\\controleur\\controle_bdd\\src\\utils\\undefined\\debug\\2026-01-19.log",
+            "hash": "ad1543a1e56f004902f3a56c11baac605d5af9a96afbcba4ca4dfda50a80e8a4"
+        }
+    ],
+    "hashType": "sha256"
+}

@@ -12,6 +12,7 @@ import { NODE_ENV, PORT, LOG_FORMAT, ORIGIN, CREDENTIALS } from './config';
 import { Routes } from './interfaces/routes.interface';
 import { ErrorMiddleware } from './middlewares/error.middleware';
 import { logger, stream } from './utils/logger';
+import { rateLimitLogger } from './middlewares/rateLimitLogger.middleware';
 import http from "http";
 
 export class App {
@@ -46,14 +47,28 @@ export class App {
   }
 
   private initializeMiddlewares() {
+    // Configuration trust proxy pour obtenir la vraie IP derrière un proxy/load balancer
+    this.app.set('trust proxy', 1);
+    
     this.app.use(morgan(LOG_FORMAT, { stream }));
     this.app.use(cors({ origin: ORIGIN, credentials: CREDENTIALS, allowedHeaders: ["Content-Type", "Authorization"]}));
     this.app.use(hpp());
     this.app.use(helmet());
     this.app.use(compression());
-    this.app.use(express.json());
-    this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(express.json({ limit: '10mb' })); // Limite la taille du body JSON
+    this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
     this.app.use(cookieParser());
+    
+    // Logger les événements de rate limiting
+    this.app.use(rateLimitLogger);
+    
+    // Timeout global pour les requêtes (60 secondes)
+    this.app.use((req, res, next) => {
+      req.setTimeout(60000, () => {
+        res.status(408).json({ message: 'Request timeout' });
+      });
+      next();
+    });
   }
 
   private initializeRoutes(routes: Routes[]) {
