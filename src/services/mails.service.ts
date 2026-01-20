@@ -547,7 +547,7 @@ export class MailService {
         Name: 'Transdev Grand Est',
       },
       To: [
-        /*{
+        {
               Email: Marin, // Chef de secteur en destinataire principal
           },
           {
@@ -558,10 +558,7 @@ export class MailService {
           },
           {
             Email: Carine, // Responsable Saint-avold
-          }*/
-          {
-            Email: 'ptijjo@hotmail.com',
-          }
+          } 
 
       ],
       Subject: `Compte rendu de contrôle du ${new Date().toLocaleDateString('fr-FR')} de ${formData.nom}`,

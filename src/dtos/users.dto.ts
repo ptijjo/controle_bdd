@@ -1,5 +1,5 @@
 import { Role } from '@prisma/client';
-import { IsEmail, IsString, IsNotEmpty, MinLength, MaxLength, IsStrongPassword, IsIn, IsOptional } from 'class-validator';
+import { IsEmail, IsString, IsNotEmpty, MinLength, MaxLength, IsStrongPassword, IsIn, IsOptional, IsEnum } from 'class-validator';
 
 export class CreateUserDto {
    @IsOptional()
@@ -33,6 +33,11 @@ export class CreateUserDto {
   @MinLength(2)
   @MaxLength(16)
   public prenom: string;
+
+  @IsOptional()
+  @IsString()
+  @IsEnum(Role)
+  public role?: Role;
 }
 
 export class UpdateUserDto {
@@ -55,7 +60,7 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
-  @IsIn(Object.values(Role))
+  @IsEnum(Role)
   public role?: Role;
 }
 
