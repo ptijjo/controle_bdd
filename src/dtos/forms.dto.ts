@@ -1,5 +1,16 @@
 import { Transform, Type } from 'class-transformer';
-import { IsDate, IsEmail, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString, Matches } from 'class-validator';
+import {
+  IsBoolean,
+  IsDate,
+  IsEmail,
+  IsIn,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Matches,
+  ValidateIf,
+} from 'class-validator';
 
 export class CreateFormDto {
   /**-------------------------------------------------------------------- */
@@ -9,10 +20,12 @@ export class CreateFormDto {
   @Transform(({ value }) => value?.trim())
   public heurePrevue: string;
 
+  /** Vide ou absente si car non passé (champ désactivé côté front) */
+  @Transform(({ value }) => (value == null || value === '' ? '' : String(value).trim()))
   @IsString()
+  @ValidateIf((o: CreateFormDto) => !o.carNonPasse)
   @Matches(/^\d{2}:\d{2}$/, { message: "L'heure doit être au format HH:mm" })
-  @Transform(({ value }) => value?.trim())
-  public heureReelle: string;
+  public heureReelle!: string;
 
   @IsDate({ message: 'date invalide' })
   @Type(() => Date)
@@ -21,6 +34,11 @@ export class CreateFormDto {
   @IsString()
   @IsNotEmpty()
   public lieuControle: string;
+
+  /** Car absent au point de contrôle : envoi sans signatures chauffeur / contrôleur */
+  @Transform(({ value }) => value === true || value === 'true' || value === 1 || value === '1')
+  @IsBoolean()
+  public carNonPasse!: boolean;
   /**-------------------------------------------------------------------- */
 
   //Chauffeur info
@@ -318,14 +336,16 @@ export class CreateFormDto {
   public nbreVoyageurIrregulier: number;
   /**-------------------------------------------------------------------- */
 
-  //signatures
+  //signatures (non requis si carNonPasse)
+  @ValidateIf((o: CreateFormDto) => !o.carNonPasse)
   @IsString()
   @IsNotEmpty({ message: 'La signature du chauffeur est obligatoire' })
-  public chauffeurSignature: string; // Base64
+  public chauffeurSignature?: string; // Base64
 
+  @ValidateIf((o: CreateFormDto) => !o.carNonPasse)
   @IsString()
   @IsNotEmpty({ message: 'La signature du contrôleur est obligatoire' })
-  public controllerSignature: string; // Base64
+  public controllerSignature?: string; // Base64
 
   /**-------------------------------------------------------------------- */
 }

@@ -7,7 +7,7 @@ export async function sendMailActivation(email: string, link: string): Promise<s
 
   const content = `
     <p>Bonjour !</p>
-    <p> Vous avez été invité à rejoindre  le groupe de contrôle de transdev Saint-Avold </p>
+    <p>Vous avez été invité à rejoindre le groupe de contrôle terrain.</p>
     <p>Pour cela, cliquez sur le lien ci-dessous : </p>
   `;
 

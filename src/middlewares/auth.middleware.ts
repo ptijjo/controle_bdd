@@ -1,6 +1,7 @@
 import { NextFunction, Response } from 'express';
 import { verify } from 'jsonwebtoken';
 import { SECRET_KEY } from '@config';
+import { JWT_ALGORITHM } from '@/constants/jwt';
 import { HttpException } from '@exceptions/httpException';
 import { DataStoredInToken, RequestWithUser } from '@interfaces/auth.interface';
 import prisma from '@/utils/prisma';
@@ -22,10 +23,15 @@ export const AuthMiddleware = async (req: RequestWithUser, res: Response, next: 
     const Authorization:string = getAuthorization(req);
     
     if (Authorization) {
-      const { id } = verify(Authorization, SECRET_KEY) as DataStoredInToken;
+      const { id } = verify(Authorization, SECRET_KEY, {
+        algorithms: [JWT_ALGORITHM],
+      }) as DataStoredInToken;
 
       const users = prisma.user;
-      const findUser = await users.findUnique({ where: { id: String(id) } });
+      const findUser = await users.findUnique({
+        where: { id: String(id) },
+        omit: { password: true },
+      });
 
       if (!findUser) {
         const ipAddress = String(req.ip || 'unknown');

@@ -1,29 +1,34 @@
 import { compare, hash } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { Service } from 'typedi';
-import { NUMBER_OF_FAIL_BEFORE_LOCK, SECRET_KEY, TIME_LOCK } from '@config';
+import { JWT_ALGORITHM } from '@/constants/jwt';
+import { NODE_ENV, NUMBER_OF_FAIL_BEFORE_LOCK, SECRET_KEY, TIME_LOCK } from '@config';
 import { AuthDto, CreateUserDto } from '@dtos/users.dto';
 import { HttpException } from '@exceptions/httpException';
 import { DataStoredInToken, TokenData } from '@interfaces/auth.interface';
-import { User } from '@interfaces/users.interface';
+import { PublicUser, User } from '@interfaces/users.interface';
 import prisma from '@/utils/prisma';
+import { toPublicUser } from '@/utils/publicUser';
 import { securityLogger, SecurityAction } from '@/utils/securityLogger';
 
 @Service()
 export class AuthService {
   private users = prisma.user;
 
-  public async signup(userData: CreateUserDto): Promise<User> {
-    const findUser: User = await this.users.findUnique({ where: { email: userData.email } });
+  public async signup(userData: CreateUserDto): Promise<PublicUser> {
+    const findUser: User | null = await this.users.findUnique({ where: { email: userData.email } });
     if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
 
     const hashedPassword = await hash(userData.password, 10);
-    const createUserData: Promise<User> = this.users.create({ data: { ...userData, password: hashedPassword } });
+    const created = await this.users.create({
+      data: { ...userData, password: hashedPassword },
+      omit: { password: true },
+    });
 
-    return createUserData;
+    return created;
   }
 
-  public async login(userData: AuthDto, ipAddressData: string): Promise<{ cookie: string; findUser: User }> {
+  public async login(userData: AuthDto, ipAddressData: string): Promise<{ cookie: string; findUser: PublicUser }> {
     // Vérifier si l'IP est bloquée pour tentatives d'emails inexistants
     const ipBlock = await prisma.ipBlock.findUnique({ where: { ipAddress: ipAddressData } });
     if (ipBlock && ipBlock.blockedUntil && ipBlock.blockedUntil > new Date()) {
@@ -35,8 +40,8 @@ export class AuthService {
       throw new HttpException(403, `IP temporairement bloquée jusqu'à ${ipBlock.blockedUntil.toLocaleString('fr-FR')}`);
     }
 
-    const findUser: User = await this.users.findUnique({ where: { email: userData.email } });
-    
+    const findUser = await this.users.findUnique({ where: { email: userData.email } });
+
     // Si l'email n'existe pas, tracker la tentative et bloquer après 3 échecs
     if (!findUser) {
       // handleNonExistentEmail peut lever une exception si l'IP est bloquée
@@ -91,26 +96,33 @@ export class AuthService {
     const tokenData = this.createToken(findUser);
     const cookie = this.createCookie(tokenData);
 
-    return { cookie, findUser };
+    return { cookie, findUser: toPublicUser(findUser) };
   }
 
-  public async logout(userData: User): Promise<User> {
-    const findUser: User = await this.users.findFirst({ where: { email: userData.email, password: userData.password } });
+  public async logout(userData: PublicUser): Promise<PublicUser> {
+    const findUser = await this.users.findUnique({
+      where: { id: userData.id },
+      omit: { password: true },
+    });
     if (!findUser) throw new HttpException(409, "User doesn't exist");
 
     return findUser;
   }
 
-  public createToken(user: User): TokenData {
+  public createToken(user: Pick<User, 'id'>): TokenData {
     const dataStoredInToken: DataStoredInToken = { id: user.id };
     const secretKey: string = SECRET_KEY;
     const expiresIn: number = 60 * 60 * 24; /*SECRET_EXPIRES as unknown as number*/
 
-    return { expiresIn, token: sign(dataStoredInToken, secretKey, { expiresIn }) };
+    return {
+      expiresIn,
+      token: sign(dataStoredInToken, secretKey, { expiresIn, algorithm: JWT_ALGORITHM }),
+    };
   }
 
   public createCookie(tokenData: TokenData): string {
-    return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn}; SameSite=Lax; Secure`;
+    const secure = NODE_ENV === 'production' ? '; Secure' : '';
+    return `Authorization=${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn}; Path=/; SameSite=Lax${secure}`;
   }
 
   private async handleNonExistentEmail(ipAddress: string): Promise<void> {

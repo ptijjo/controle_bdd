@@ -1,7 +1,7 @@
+import { prisma } from './setup';
 import { AuthService } from '@/services/auth.service';
 import { AuthDto, CreateUserDto } from '@/dtos/users.dto';
 import { HttpException } from '@/exceptions/httpException';
-import { prisma } from './setup';
 import { hash } from 'bcrypt';
 import { Role } from '@prisma/client';
 
@@ -28,7 +28,9 @@ describe('AuthService', () => {
       expect(user.email).toBe(userData.email);
       expect(user.nom).toBe(userData.nom);
       expect(user.prenom).toBe(userData.prenom);
-      expect(user.password).not.toBe(userData.password); // Le mot de passe doit être hashé
+      const fromDb = await prisma.user.findUnique({ where: { email: userData.email } });
+      expect(fromDb?.password).toBeDefined();
+      expect(fromDb?.password).not.toBe(userData.password);
     });
 
     it('devrait lever une exception si l\'email existe déjà', async () => {
@@ -187,9 +189,12 @@ describe('AuthService', () => {
 
       expect(cookie).toContain('Authorization=');
       expect(cookie).toContain('HttpOnly');
-      expect(cookie).toContain('SameSite=None');
-      expect(cookie).toContain('Secure');
+      expect(cookie).toContain('SameSite=Lax');
+      expect(cookie).toContain('Path=/');
       expect(cookie).toContain(`Max-Age=${tokenData.expiresIn}`);
+      if (process.env.NODE_ENV === 'production') {
+        expect(cookie).toContain('Secure');
+      }
     });
   });
 });

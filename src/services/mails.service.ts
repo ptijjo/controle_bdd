@@ -30,7 +30,7 @@ export class MailService {
         {
           From: {
             Email: EMAIL,
-            Name: 'Transdev Grand Est',
+            Name: 'Service de contrôle',
           },
           To: [
             {
@@ -63,7 +63,7 @@ export class MailService {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="format-detection" content="telephone=no" />
-    <title>Template Form Transdev</title>
+    <title>Formulaire de contrôle</title>
     <style type="text/css">
         /* -------------------------------------
 		   RESET STYLE
@@ -544,7 +544,7 @@ export class MailService {
     const messageConfig: any = {
       From: {
         Email: EMAIL,
-        Name: 'Transdev Grand Est',
+        Name: 'Service de contrôle',
       },
       To: [
         {
@@ -561,7 +561,7 @@ export class MailService {
           } 
 
       ],
-      Subject: `Compte rendu de contrôle du ${new Date().toLocaleDateString('fr-FR')} de ${formData.nom}`,
+      Subject: `${formData.carNonPasse ? '[Car non passé] ' : ''}Compte rendu de contrôle du ${new Date().toLocaleDateString('fr-FR')} de ${formData.nom}`,
       TextPart: "Veuillez trouver ci-joint le rapport de contrôle en PDF.",
       HTMLPart: "<h3>Bonjour,</h3><p>Veuillez trouver ci-joint le rapport de contrôle en PDF.</p>",
       Attachments: [

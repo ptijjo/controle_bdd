@@ -95,14 +95,17 @@
         <tr><td class="label">Heure réelle</td><td>${form.heureReelle || '-'}</td></tr>
         <tr><td class="label">Lieu</td><td>${form.lieuControle || '-'}</td></tr>
         <tr><td class="label">Météo</td><td>${form.meteo === 'beau' ? 'Beau' : form.meteo === 'pluvieux' ? 'Pluvieux' : '-'}</td></tr>
+        <tr><td class="label">Car non passé</td><td>${form.carNonPasse ? 'Oui' : 'Non'}</td></tr>
       </table>
     </div>
     <div class="column">
       <h2>Chauffeur</h2>
       <table class="compact-table">
-        <tr><td class="label">Nom</td><td>${form.nom || '-'}</td></tr>
+        ${form.carNonPasse
+          ? `<tr><td colspan="2" style="font-style: italic; color: #555; background: #fafafa;">Non applicable — car non passé au point de contrôle (aucun conducteur identifié).</td></tr>`
+          : `<tr><td class="label">Nom</td><td>${form.nom || '-'}</td></tr>
         <tr><td class="label">Prénom</td><td>${form.prenom || '-'}</td></tr>
-        ${form.email ? `<tr><td class="label">Email</td><td>${form.email}</td></tr>` : ''}
+        ${form.email ? `<tr><td class="label">Email</td><td>${form.email}</td></tr>` : ''}`}
       </table>
     </div>
   </div>
@@ -195,7 +198,12 @@
     </div>
   </div>
 
-  <h2>Signatures</h2>
+  ${form.carNonPasse
+    ? `<div style="margin-top: 16px; padding: 10px; border: 1px solid #c00; background: #fff5f5;">
+      <p style="margin: 0; font-weight: bold; color: #a00;">Car non passé au point de contrôle</p>
+      <p style="margin: 6px 0 0 0;">Aucune signature chauffeur ni contrôleur n'a été recueillie (véhicule absent).</p>
+    </div>`
+    : `<h2>Signatures</h2>
   <div class="signatures-container">
     <div class="signature">
       <p><strong>Signature Chauffeur</strong></p>
@@ -205,6 +213,6 @@
       <p><strong>Signature Contrôleur</strong></p>
       <img src="${form.controllerSignature}" alt="Signature Contrôleur"/>
     </div>
-  </div>
+  </div>`}
 </body>
 </html>

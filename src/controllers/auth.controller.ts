@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { Container } from 'typedi';
 import { RequestWithUser } from '@interfaces/auth.interface';
-import { User } from '@interfaces/users.interface';
+import { PublicUser } from '@interfaces/users.interface';
 import { AuthService } from '@services/auth.service';
 import { AuthDto, CreateUserDto } from '@/dtos/users.dto';
 import { TokenService } from '@/services/token.service';
@@ -27,7 +27,7 @@ export class AuthController {
       userData.email = decodedToken.email;
 
       // Appel du service pour créer l'utilisateur
-      const signUpUserData: User = await this.auth.signup(userData);
+      const signUpUserData: PublicUser = await this.auth.signup(userData);
 
       // Log de la création de compte
       const ipAddress = String(req.ip || 'unknown');
@@ -78,9 +78,9 @@ export class AuthController {
 
   public logOut = async (req: RequestWithUser, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userData: User = req.user;
+      const userData: PublicUser = req.user;
       const ipAddress = String(req.ip || 'unknown');
-      const logOutUserData: User = await this.auth.logout(userData);
+      const logOutUserData: PublicUser = await this.auth.logout(userData);
 
       // Log de la déconnexion
       securityLogger.logAuth(

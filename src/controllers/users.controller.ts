@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { Container } from 'typedi';
-import { User } from '@interfaces/users.interface';
+import { PublicUser, User } from '@interfaces/users.interface';
 import { UserService } from '@services/users.service';
 import { CreateInvitationDto } from '@/dtos/users.dto';
 import { RequestWithUser } from '@/interfaces/auth.interface';
@@ -14,7 +14,7 @@ export class UserController {
   
   public getUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const findAllUsersData: User[] = await this.user.findAllUser();
+      const findAllUsersData: PublicUser[] = await this.user.findAllUser();
 
       res.status(200).json({ data: findAllUsersData, message: 'findAll' });
     } catch (error) {
@@ -25,7 +25,7 @@ export class UserController {
   public getUserById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = String(req.params.id);
-      const findOneUserData: User = await this.user.findUserById(userId);
+      const findOneUserData: PublicUser = await this.user.findUserById(userId);
 
       res.status(200).json({ data: findOneUserData, message: 'findOne' });
     } catch (error) {
@@ -52,19 +52,18 @@ export class UserController {
       //   throw new HttpException(404, "Opération non authorisée !");
       // }
 
-      const inviteUser = await this.user.invitationUser(data);
+      await this.user.invitationUser(data);
 
-      // Log de l'invitation
       securityLogger.logUserAction(
         SecurityAction.USER_INVITED,
         req.user,
         undefined,
         data.email,
         ipAddress,
-        { invitationLink: inviteUser }
+        { invitedEmail: data.email },
       );
 
-      res.status(200).json({ data: inviteUser, message: 'invitation envoyée !' });
+      res.status(200).json({ data: { email: data.email }, message: 'invitation envoyée !' });
     } catch (error) {
       next(error);
     }
@@ -77,7 +76,7 @@ export class UserController {
       const ipAddress = String(req.ip || 'unknown');
       
       const oldUser = await this.user.findUserById(userId);
-      const updateUserData: User = await this.user.updateUser(userId, userData);
+      const updateUserData: PublicUser = await this.user.updateUser(userId, userData);
 
       // Log de la modification
       const roleChanged = oldUser.role !== updateUserData.role;
@@ -105,7 +104,7 @@ export class UserController {
       const userId = String(req.params.id);
       const ipAddress = String(req.ip || 'unknown');
       
-      const deleteUserData: User = await this.user.deleteUser(userId);
+      const deleteUserData: PublicUser = await this.user.deleteUser(userId);
 
       // Log de la suppression (action critique)
       securityLogger.logUserAction(

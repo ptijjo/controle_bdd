@@ -29,7 +29,9 @@ export class App {
 
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
-    this.initializeSwagger();
+    if (this.env !== 'production') {
+      this.initializeSwagger();
+    }
     this.initializeErrorHandling();
   }
 

@@ -1,66 +1,69 @@
 import { hash } from 'bcrypt';
 import { Service } from 'typedi';
-import { CreateInvitationDto, CreateUserDto } from '@dtos/users.dto';
+import { CreateInvitationDto, CreateUserDto, UpdateUserDto } from '@dtos/users.dto';
 import { HttpException } from '@/exceptions/httpException';
-import { User } from '@interfaces/users.interface';
+import { PublicUser } from '@interfaces/users.interface';
 import jwt from 'jsonwebtoken';
 import { FRONT_END, SECRET_KEY_INVITATION } from '@/config';
+import { JWT_ALGORITHM } from '@/constants/jwt';
 import { sendMailActivation } from '../mails/users/user.email';
 import prisma from '@/utils/prisma';
+import { Prisma } from '@prisma/client';
 
 @Service()
 export class UserService {
   public user = prisma.user;
 
-  public async findAllUser(): Promise<User[]> {
-    const allUser: User[] = await this.user.findMany();
-    return allUser;
+  public async findAllUser(): Promise<PublicUser[]> {
+    return this.user.findMany({ omit: { password: true } });
   }
 
-  public async findUserById(userId: string): Promise<User> {
-    const findUser: User = await this.user.findUnique({ where: { id: userId } });
+  public async findUserById(userId: string): Promise<PublicUser> {
+    const findUser = await this.user.findUnique({
+      where: { id: userId },
+      omit: { password: true },
+    });
     if (!findUser) throw new HttpException(409, "User doesn't exist");
 
     return findUser;
   }
 
-  public async invitationUser(invitationData: CreateInvitationDto): Promise<string> {
-    const findUser: User = await this.user.findUnique({ where: { email: invitationData.email } });
-    if (findUser) throw new HttpException(409, `This email ${invitationData.email} already exists`);
+  public async invitationUser(invitationData: CreateInvitationDto): Promise<void> {
+    const existing = await this.user.findUnique({ where: { email: invitationData.email }, select: { id: true } });
+    if (existing) throw new HttpException(409, `This email ${invitationData.email} already exists`);
 
-
-    //Creation du token
     const tokenInvitation = jwt.sign(
-      {
-        email: invitationData.email,
-
-      },
+      { email: invitationData.email },
       SECRET_KEY_INVITATION as string,
-      { expiresIn: '24h' },
+      { expiresIn: '24h', algorithm: JWT_ALGORITHM },
     );
 
-    //sendEmail
     const link = `${FRONT_END}/${tokenInvitation}`;
     await sendMailActivation(invitationData.email, link);
-
-    return link;
   }
 
-  public async updateUser(userId: string, userData: CreateUserDto): Promise<User> {
-    const findUser: User = await this.user.findUnique({ where: { id: userId } });
+  public async updateUser(userId: string, userData: UpdateUserDto): Promise<PublicUser> {
+    const findUser = await this.user.findUnique({ where: { id: userId }, select: { id: true } });
     if (!findUser) throw new HttpException(409, "User doesn't exist");
 
-    const hashedPassword = await hash(userData.password, 10);
-    const updateUserData = await this.user.update({ where: { id: userId }, data: { ...userData, password: hashedPassword } });
-    return updateUserData;
+    const { password, ...rest } = userData;
+    const data: Prisma.UserUpdateInput = { ...rest };
+    if (password != null && String(password).trim() !== '') {
+      data.password = await hash(password, 10);
+    }
+
+    return this.user.update({
+      where: { id: userId },
+      data,
+      omit: { password: true },
+    });
   }
 
-  public async deleteUser(userId: string): Promise<User> {
-    const findUser: User = await this.user.findUnique({ where: { id: userId } });
+  public async deleteUser(userId: string): Promise<PublicUser> {
+    const findUser = await this.user.findUnique({ where: { id: userId }, select: { id: true } });
     if (!findUser) throw new HttpException(409, "User doesn't exist");
 
-    const deleteUserData = await this.user.delete({ where: { id: userId } });
-    return deleteUserData;
+    return this.user.delete({ where: { id: userId }, omit: { password: true } });
   }
 
 }

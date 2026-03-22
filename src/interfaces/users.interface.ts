@@ -12,3 +12,6 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
 }
+
+/** Utilisateur exposé aux API (jamais le hash mot de passe). */
+export type PublicUser = Omit<User, 'password'>;

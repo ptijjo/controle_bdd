@@ -1,31 +1,16 @@
+import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
 import { PrismaClient } from '@prisma/client';
-import { execSync } from 'child_process';
+import Database from 'better-sqlite3';
 import { join } from 'path';
-import { existsSync, unlinkSync } from 'fs';
 
-// Utiliser une base de données de test séparée
-const TEST_DATABASE_URL = 'file:./test.db';
+const testDbPath = join(process.cwd(), 'test.db');
 
 let prisma: PrismaClient;
 
-// Nettoyer la base de données de test si elle existe
-if (existsSync('./test.db')) {
-  try {
-    unlinkSync('./test.db');
-  } catch (error) {
-    // Ignorer les erreurs de suppression
-  }
-}
-
 beforeAll(async () => {
-  // Créer une nouvelle instance Prisma pour les tests
-  prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: TEST_DATABASE_URL,
-      },
-    },
-  });
+  const sqlite = new Database(testDbPath);
+  const adapter = new PrismaBetterSqlite3({ url: testDbPath });
+  prisma = new PrismaClient({ adapter });
 
   // Créer le schéma de test manuellement
   await prisma.$executeRawUnsafe(`
@@ -68,14 +53,6 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await prisma.$disconnect();
-  // Nettoyer la base de données de test après tous les tests
-  if (existsSync('./test.db')) {
-    try {
-      unlinkSync('./test.db');
-    } catch (error) {
-      // Ignorer les erreurs de suppression
-    }
-  }
 });
 
 beforeEach(async () => {

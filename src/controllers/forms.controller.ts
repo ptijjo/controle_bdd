@@ -36,31 +36,29 @@ export class FormController {
         prenom: req.user.prenom,
       };
 
-      // Vérification signatures présentes
-      if (!formData.controllerSignature || !formData.chauffeurSignature /*|| !formData.nom || !formData.prenom*/) {
-        throw new HttpException(400, 'Les deux signatures et le nom du chauffeur sont obligatoires');
+      // Signatures obligatoires sauf si le car n'est pas passé au contrôle
+      if (!formData.carNonPasse) {
+        if (!formData.controllerSignature || !formData.chauffeurSignature) {
+          throw new HttpException(400, 'Les deux signatures sont obligatoires lorsque le car est passé au contrôle');
+        }
+
+        const MAX_SIGNATURE_SIZE = 500 * 1024; // 500KB max par signature
+
+        const validateSignature = (signature: string, name: string) => {
+          const base64Data = signature.includes(',') ? signature.split(',')[1] : signature;
+          if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
+            throw new HttpException(400, `Format de signature invalide pour ${name}`);
+          }
+
+          const estimatedSize = (base64Data.length * 3) / 4;
+          if (estimatedSize > MAX_SIGNATURE_SIZE) {
+            throw new HttpException(400, `Signature ${name} trop volumineuse (max 500KB)`);
+          }
+        };
+
+        validateSignature(formData.controllerSignature, 'contrôleur');
+        validateSignature(formData.chauffeurSignature, 'chauffeur');
       }
-
-      // Validation du format et de la taille des signatures base64
-      const MAX_SIGNATURE_SIZE = 500 * 1024; // 500KB max par signature
-      const base64Regex = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/i;
-      
-      const validateSignature = (signature: string, name: string) => {
-        // Vérifier le format base64 (avec ou sans préfixe data URL)
-        const base64Data = signature.includes(',') ? signature.split(',')[1] : signature;
-        if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
-          throw new HttpException(400, `Format de signature invalide pour ${name}`);
-        }
-        
-        // Vérifier la taille (approximative : base64 est ~33% plus grand que l'original)
-        const estimatedSize = (base64Data.length * 3) / 4;
-        if (estimatedSize > MAX_SIGNATURE_SIZE) {
-          throw new HttpException(400, `Signature ${name} trop volumineuse (max 500KB)`);
-        }
-      };
-
-      validateSignature(formData.controllerSignature, 'contrôleur');
-      validateSignature(formData.chauffeurSignature, 'chauffeur');
 
       //Vérification si email present
       // if (!formData.email) {

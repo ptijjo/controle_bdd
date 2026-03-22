@@ -1,5 +1,5 @@
 import { logger } from './logger';
-import { User } from '@interfaces/users.interface';
+import { PublicUser } from '@interfaces/users.interface';
 
 export enum SecurityAction {
   // Authentification
@@ -99,7 +99,7 @@ class SecurityLogger {
    */
   public logUserAction(
     action: SecurityAction,
-    actor: User,
+    actor: PublicUser,
     targetUserId?: string,
     targetUserEmail?: string,
     ipAddress?: string,
@@ -122,7 +122,7 @@ class SecurityLogger {
   /**
    * Log une action de formulaire
    */
-  public logFormAction(action: SecurityAction, user: User, ipAddress?: string, details?: Record<string, any>): void {
+  public logFormAction(action: SecurityAction, user: PublicUser, ipAddress?: string, details?: Record<string, any>): void {
     this.log({
       action,
       userId: user.id,
