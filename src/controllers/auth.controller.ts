@@ -7,10 +7,12 @@ import { AuthDto, CreateUserDto } from '@/dtos/users.dto';
 import { TokenService } from '@/services/token.service';
 import { HttpException } from '@/exceptions/httpException';
 import { securityLogger, SecurityAction } from '@/utils/securityLogger';
+import { UserService } from '@/services/users.service';
 
 export class AuthController {
   public auth = Container.get(AuthService);
   public token = Container.get(TokenService);
+  public userService = Container.get(UserService);
 
   public signUp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -25,6 +27,12 @@ export class AuthController {
       }
       // Assigne l'email provenant du token
       userData.email = decodedToken.email;
+
+      // Vérifie si l'email existe déjà
+      const existingUser = await this.userService.user.findUnique({ where: { email: userData.email } });
+      if (existingUser) {
+        throw new HttpException(400, "Une invitation a déjà été envoyée à ce lien. Veuillez utiliser un autre lien !");
+      }
 
       // Appel du service pour créer l'utilisateur
       const signUpUserData: PublicUser = await this.auth.signup(userData);
