@@ -30,7 +30,9 @@ export class UserService {
 
   public async invitationUser(invitationData: CreateInvitationDto): Promise<void> {
     const existing = await this.user.findUnique({ where: { email: invitationData.email }, select: { id: true } });
-    if (existing) throw new HttpException(409, `This email ${invitationData.email} already exists`);
+    if (existing) {
+      throw new HttpException(409, "Impossible d'envoyer une invitation vers cette adresse.");
+    }
 
     const tokenInvitation = jwt.sign(
       { email: invitationData.email },
@@ -40,6 +42,7 @@ export class UserService {
 
     const link = `${FRONT_END}/${tokenInvitation}`;
     await sendMailActivation(invitationData.email, link);
+    
   }
 
   public async updateUser(userId: string, userData: UpdateUserDto): Promise<PublicUser> {

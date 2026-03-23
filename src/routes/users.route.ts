@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { UserController } from '@controllers/users.controller';
-import { CreateUserDto, UpdateUserDto } from '@dtos/users.dto';
+import { CreateInvitationDto, UpdateUserDto } from '@dtos/users.dto';
 import { Routes } from '@interfaces/routes.interface';
 import { ValidationMiddleware } from '@middlewares/validation.middleware';
 import { AuthMiddleware } from '@/middlewares/auth.middleware';
@@ -23,7 +23,14 @@ export class UserRoute implements Routes {
     this.router.get(`${this.path}_me`, readRateLimiter, AuthMiddleware, this.user.getConnected);
     
     // Endpoint d'invitation - rate limiting restrictif
-    this.router.post(`${this.path}`, inviteRateLimiter, AuthMiddleware, RoleGuard(["chef_service","controleur"]), this.user.inviteUser);
+    this.router.post(
+      `${this.path}`,
+      inviteRateLimiter,
+      AuthMiddleware,
+      RoleGuard(['chef_service', 'controleur']),
+      ValidationMiddleware(CreateInvitationDto),
+      this.user.inviteUser,
+    );
     
     // Endpoint de modification - rate limiting modéré
     this.router.patch(`${this.path}/:id`, writeRateLimiter, AuthMiddleware, RoleGuard(["chef_service","controleur"]), ValidationMiddleware(UpdateUserDto, true), this.user.updateUser);

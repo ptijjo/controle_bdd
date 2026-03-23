@@ -17,7 +17,9 @@ export class AuthService {
 
   public async signup(userData: CreateUserDto): Promise<PublicUser> {
     const findUser: User | null = await this.users.findUnique({ where: { email: userData.email } });
-    if (findUser) throw new HttpException(409, `This email ${userData.email} already exists`);
+    if (findUser) {
+      throw new HttpException(409, "La création du compte n'a pas pu aboutir.");
+    }
 
     const hashedPassword = await hash(userData.password, 10);
     const created = await this.users.create({

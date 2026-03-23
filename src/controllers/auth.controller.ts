@@ -31,7 +31,10 @@ export class AuthController {
       // Vérifie si l'email existe déjà
       const existingUser = await this.userService.user.findUnique({ where: { email: userData.email } });
       if (existingUser) {
-        throw new HttpException(400, "Une invitation a déjà été envoyée à ce lien. Veuillez utiliser un autre lien !");
+        throw new HttpException(
+          409,
+          "Ce lien d'inscription ne peut plus être utilisé. Connectez-vous ou demandez une nouvelle invitation.",
+        );
       }
 
       // Appel du service pour créer l'utilisateur
@@ -48,6 +51,20 @@ export class AuthController {
       );
 
       res.status(201).json({ data: signUpUserData, message: 'signup' });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /** Vérifie le JWT d’invitation avant affichage du formulaire (pas de body, pas de CreateUserDto). */
+  public verifyInvitation = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const token = req.params.id?.trim();
+      if (!token) {
+        throw new HttpException(400, "Token d'invitation manquant");
+      }
+      const { email } = await this.token.tokenInvitation(token);
+      res.status(200).json({ data: { email }, message: 'Token valide' });
     } catch (error) {
       next(error);
     }
