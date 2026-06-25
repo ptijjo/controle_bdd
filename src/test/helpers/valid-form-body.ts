@@ -1,0 +1,36 @@
+/** Corps minimal valide pour POST /formulaire (tests unitaires et e2e). */
+export function validFormBody(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    heurePrevue: '08:00',
+    date: new Date('2025-01-15').toISOString(),
+    lieuControle: 'Gare',
+    carNonPasse: true,
+    nom: 'Dupont',
+    prenom: 'Jean',
+    typeArret: 'Abris bus',
+    client: 'casas',
+    meteo: 'beau',
+    parc: 1,
+    affichageDestination: 'Conforme',
+    affichageNumeroLigne: 'Conforme',
+    pictoEnfant: 'Conforme',
+    tarifAffiche: 'Conforme',
+    depliantHoraire: 'Conforme',
+    reglement: 'Conforme',
+    carosserie: 'Propre',
+    observationCar: 'RAS',
+    billetiqueElectronique: 'Conforme',
+    billetiqueManuelle: 'Conforme',
+    fondDeCaisse: 'Conforme',
+    observationBilletique: 'RAS',
+    tableauBord: 'Propre',
+    sol: 'Propre',
+    vitres: 'Propre',
+    sieges: 'Propre',
+    nbreVoyageur: 10,
+    nbreVoyageurIrregulier: 0,
+    ...overrides,
+  };
+}
