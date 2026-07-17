@@ -7,6 +7,7 @@ export type MockPrismaClient = {
     create: jest.Mock;
     update: jest.Mock;
     delete: jest.Mock;
+    count: jest.Mock;
   };
   ipBlock: {
     findUnique: jest.Mock;
@@ -17,6 +18,22 @@ export type MockPrismaClient = {
   loginAttempts: {
     create: jest.Mock;
   };
+  usedInvitation: {
+    findUnique: jest.Mock;
+    create: jest.Mock;
+  };
+  refreshToken: {
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+    updateMany: jest.Mock;
+  };
+  formSubmission: {
+    findUnique: jest.Mock;
+    create: jest.Mock;
+    update: jest.Mock;
+  };
+  $transaction: jest.Mock;
 };
 
 export function createMockPrisma(): MockPrismaClient {
@@ -27,6 +44,7 @@ export function createMockPrisma(): MockPrismaClient {
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
     },
     ipBlock: {
       findUnique: jest.fn(),
@@ -37,6 +55,22 @@ export function createMockPrisma(): MockPrismaClient {
     loginAttempts: {
       create: jest.fn(),
     },
+    usedInvitation: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+    },
+    refreshToken: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+    },
+    formSubmission: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    $transaction: jest.fn(),
   };
 }
 

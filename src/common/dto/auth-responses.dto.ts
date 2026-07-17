@@ -7,9 +7,10 @@ export class AuthTokensResponseDto {
 
   @ApiProperty({
     description:
-      'JWT de rafraîchissement (corps mobile ; cookie httpOnly `refresh_token` côté web)',
+      'JWT refresh — uniquement pour clients natifs via POST /auth/refresh body. Le web utilise le cookie httpOnly uniquement.',
+    required: false,
   })
-  refresh_token!: string;
+  refresh_token?: string;
 
   @ApiProperty({ type: UserResponseDto })
   user!: UserResponseDto;

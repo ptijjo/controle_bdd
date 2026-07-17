@@ -1,4 +1,5 @@
-/** Contenu minimal du refresh JWT : identifiant utilisateur uniquement. */
+/** Contenu du refresh JWT : utilisateur + jti pour révocation. */
 export type RefreshJwtPayload = {
   sub: string;
+  jti: string;
 };

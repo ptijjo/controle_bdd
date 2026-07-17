@@ -14,8 +14,9 @@ export function setupSwaggerIfDevelopment(app: INestApplication): void {
         'API NestJS pour la saisie des contrôles, l’authentification JWT et la gestion des utilisateurs.',
         '',
         '**Authentification**',
-        '- `POST /auth/login` : access token (Bearer) + refresh (cookie httpOnly sur `/auth` ou corps `refresh_token`).',
-        '- `POST /auth/refresh` : renouvellement des jetons.',
+        '- `POST /auth/login` : access token (Bearer) + refresh en cookie httpOnly (`path=/auth`).',
+        '- `POST /auth/refresh` : rotation du refresh (cookie ou corps mobile) ; ancien jti révoqué.',
+        '- `POST /auth/logout` : révocation refresh en base + clear cookie.',
         '- `GET /auth/me` : profil de l’utilisateur connecté.',
         '',
         '**Rôles** : `controleur`, `chef_service`, `agent`. Certaines routes exigent un rôle élevé.',
@@ -25,7 +26,7 @@ export function setupSwaggerIfDevelopment(app: INestApplication): void {
     )
     .setVersion('1.0')
     .addServer(`http://localhost:${port}`, 'Développement local')
-    .addTag('auth', 'Connexion, jetons, invitations, inscription')
+    .addTag('auth', 'Connexion, jetons, invitations, inscription par invite')
     .addTag('users', 'Gestion des comptes (contrôleur / chef de service)')
     .addTag('formulaire', 'Formulaires de contrôle et export Excel')
     .addTag('health', 'Santé de l’API')

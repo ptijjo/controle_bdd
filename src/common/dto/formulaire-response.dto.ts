@@ -1,16 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-class FormulairePersistResultDto {
-  @ApiProperty({ example: 'PDF enregistré' })
-  envoiPdf!: string;
+class FormulaireAcceptResultDto {
+  @ApiProperty({ example: 'clxyz...' })
+  id!: string;
 
-  @ApiProperty({ example: 'Excel mis à jour' })
-  saveExcel!: string;
+  @ApiProperty({ example: 'accepted' })
+  status!: string;
 }
 
 export class FormulaireCreateResponseDto {
-  @ApiProperty({ type: FormulairePersistResultDto })
-  data!: FormulairePersistResultDto;
+  @ApiProperty({ type: FormulaireAcceptResultDto })
+  data!: FormulaireAcceptResultDto;
 
   @ApiProperty({ example: 'Formulaire crée avec succès' })
   message!: string;

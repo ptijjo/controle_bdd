@@ -6,6 +6,7 @@ import {
   HttpCode,
   Param,
   Patch,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -14,6 +15,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { UserResponseDto } from '../common/dto/user-response.dto';
@@ -37,11 +39,19 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Liste des utilisateurs' })
+  @ApiOperation({ summary: 'Liste des utilisateurs (paginée)' })
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, example: 50 })
   @ApiOkResponse({ type: UserResponseDto, isArray: true })
-  async getAllUser() {
-    const users = await this.userService.getAllUser();
-    return toUserResponseDtoList(users);
+  async getAllUser(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const result = await this.userService.getAllUser({
+      page: page ? Number(page) : undefined,
+      limit: limit ? Number(limit) : undefined,
+    });
+    return toUserResponseDtoList(result.items);
   }
 
   @Get(':id')

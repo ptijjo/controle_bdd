@@ -16,3 +16,13 @@ export const Role = {
 } as const
 
 export type Role = (typeof Role)[keyof typeof Role]
+
+
+export const FormProcessingStatus = {
+  pending: 'pending',
+  processing: 'processing',
+  completed: 'completed',
+  failed: 'failed'
+} as const
+
+export type FormProcessingStatus = (typeof FormProcessingStatus)[keyof typeof FormProcessingStatus]

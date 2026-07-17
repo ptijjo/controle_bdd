@@ -1,14 +1,21 @@
+jest.mock('../prisma/prisma.service', () => ({
+  PrismaService: class PrismaService {},
+}));
+
+jest.mock('./form-processing.queue', () => ({
+  FormProcessingQueue: class FormProcessingQueue {},
+}));
+
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Readable } from 'node:stream';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { AuthUser } from '../auth/types/auth-user.type';
+import { PrismaService } from '../prisma/prisma.service';
 import { toCreateFormDto } from '../test/helpers/to-create-form-dto';
-import { MailService } from '../mail/mail.service';
-import { generatePdf } from '../utils/pdfCreator';
+import { createMockPrisma } from '../test/mocks/prisma.mock';
 import * as saveToExcel from '../utils/saveToExcel';
-import { FormSecurityLoggerService } from './form-security-logger.service';
+import { FormProcessingQueue } from './form-processing.queue';
 import { FormulaireService } from './formulaire.service';
-import { SecurityAction } from './security-action.enum';
 
 const mockExistsSync = jest.fn();
 const mockCreateReadStream = jest.fn();
@@ -18,17 +25,12 @@ jest.mock('node:fs', () => ({
   createReadStream: (...args: unknown[]) => mockCreateReadStream(...args),
 }));
 
-jest.mock('../utils/pdfCreator', () => ({
-  generatePdf: jest.fn(),
-}));
-
 jest.mock('../utils/saveToExcel', () => ({
   getControleDir: jest.fn(),
   getControleExcelFilePath: jest.fn(),
   saveFormToExcel: jest.fn(),
 }));
 
-const mockGeneratePdf = generatePdf as jest.MockedFunction<typeof generatePdf>;
 const mockGetControleDir = saveToExcel.getControleDir as jest.MockedFunction<
   typeof saveToExcel.getControleDir
 >;
@@ -36,9 +38,6 @@ const mockGetControleExcelFilePath =
   saveToExcel.getControleExcelFilePath as jest.MockedFunction<
     typeof saveToExcel.getControleExcelFilePath
   >;
-const mockSaveFormToExcel = saveToExcel.saveFormToExcel as jest.MockedFunction<
-  typeof saveToExcel.saveFormToExcel
->;
 
 const authUser: AuthUser = {
   id: 'user-1',
@@ -54,33 +53,24 @@ const authUser: AuthUser = {
 
 describe('FormulaireService', () => {
   let service: FormulaireService;
-  const sendResume = jest.fn();
-  const logFormAction = jest.fn();
+  const enqueue = jest.fn();
+  const prisma = createMockPrisma();
 
   beforeEach(async () => {
-    sendResume.mockReset();
-    logFormAction.mockReset();
-    mockGeneratePdf.mockReset();
+    enqueue.mockReset();
     mockGetControleDir.mockReset();
     mockGetControleExcelFilePath.mockReset();
-    mockSaveFormToExcel.mockReset();
     mockExistsSync.mockReset();
     mockCreateReadStream.mockReset();
-
-    mockGeneratePdf.mockResolvedValue(Buffer.from('pdf-bytes'));
-    sendResume.mockResolvedValue('email-envoye');
-    mockSaveFormToExcel.mockResolvedValue('excel-enregistre');
+    prisma.formSubmission.create.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FormulaireService,
+        { provide: PrismaService, useValue: prisma },
         {
-          provide: MailService,
-          useValue: { sendResume },
-        },
-        {
-          provide: FormSecurityLoggerService,
-          useValue: { logFormAction },
+          provide: FormProcessingQueue,
+          useValue: { enqueue },
         },
       ],
     }).compile();
@@ -168,7 +158,7 @@ describe('FormulaireService', () => {
 
       await expect(
         service.createForm(authUser, formData, '10.0.0.1'),
-      ).rejects.toThrow('Format de signature invalide pour contrôleur');
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should reject oversized signature', async () => {
@@ -185,55 +175,30 @@ describe('FormulaireService', () => {
       ).rejects.toThrow('Signature contrôleur trop volumineuse (max 500KB)');
     });
 
-    it('should generate PDF, send email, save Excel and log security action on success', async () => {
+    it('should persist submission and enqueue background processing', async () => {
       const formData = toCreateFormDto({
         carNonPasse: false,
         heureReelle: '08:15',
         controllerSignature: 'YWJj',
         chauffeurSignature: 'YWJj',
       });
+      prisma.formSubmission.create.mockResolvedValue({ id: 'sub-1' });
 
       const result = await service.createForm(authUser, formData, '192.168.1.5');
 
-      expect(mockGeneratePdf).toHaveBeenCalledWith(
-        authUser.nom,
-        expect.objectContaining({
-          client: 'casas',
-          lieuControle: 'Gare',
-        }),
-      );
-      expect(sendResume).toHaveBeenCalledWith(
-        expect.objectContaining({ client: 'casas' }),
-        expect.any(String),
-        [authUser.email],
-      );
-      expect(mockSaveFormToExcel).toHaveBeenCalledWith(
-        { nom: authUser.nom, prenom: authUser.prenom },
-        expect.objectContaining({ client: 'casas' }),
-      );
-      expect(logFormAction).toHaveBeenCalledWith(
-        SecurityAction.FORM_CREATED,
-        authUser,
-        '192.168.1.5',
-        expect.objectContaining({
-          lieuControle: 'Gare',
-          client: 'casas',
-        }),
-      );
-      expect(result).toEqual({
-        envoiPdf: 'email-envoye',
-        saveExcel: 'excel-enregistre',
-      });
+      expect(prisma.formSubmission.create).toHaveBeenCalled();
+      expect(enqueue).toHaveBeenCalledWith('sub-1');
+      expect(result).toEqual({ id: 'sub-1', status: 'accepted' });
     });
 
     it('should skip signatures when car did not pass control', async () => {
       const formData = toCreateFormDto({ carNonPasse: true });
+      prisma.formSubmission.create.mockResolvedValue({ id: 'sub-2' });
 
       const result = await service.createForm(authUser, formData, '127.0.0.1');
 
-      expect(result.envoiPdf).toBe('email-envoye');
-      expect(mockGeneratePdf).toHaveBeenCalled();
-      expect(logFormAction).toHaveBeenCalled();
+      expect(result).toEqual({ id: 'sub-2', status: 'accepted' });
+      expect(enqueue).toHaveBeenCalledWith('sub-2');
     });
   });
 });

@@ -19,20 +19,28 @@ enum Role {
   agent
 }
 
+enum FormProcessingStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
 model User {
-  id                  String    @id @default(cuid())
-  email               String    @unique
+  id                  String         @id @default(cuid())
+  email               String         @unique
   password            String
   nom                 String
   prenom              String
-  role                Role      @default(agent)
-  createdAt           DateTime  @default(now())
-  failedLoginAttempts Int       @default(0)
+  role                Role           @default(agent)
+  createdAt           DateTime       @default(now())
+  failedLoginAttempts Int            @default(0)
   lockedUntil         DateTime?
-  updatedAt           DateTime  @updatedAt
+  updatedAt           DateTime       @updatedAt
 
-  //Relations
-  LoginAttempts LoginAttempts[]
+  LoginAttempts   LoginAttempts[]
+  refreshTokens   RefreshToken[]
+  formSubmissions FormSubmission[]
 }
 
 model LoginAttempts {
@@ -42,6 +50,9 @@ model LoginAttempts {
   success   Boolean
   ipAddress String
   createdAt DateTime @default(now())
+
+  @@index([emailName])
+  @@index([createdAt])
 }
 
 model IpBlock {
@@ -51,4 +62,44 @@ model IpBlock {
   blockedUntil   DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+}
+
+/** Jeton d’invitation consommé (inscription réussie via register/invite). */
+model UsedInvitation {
+  id        String   @id @default(cuid())
+  jti       String   @unique
+  email     String
+  usedAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+/** Refresh JWT actifs (révocation / rotation). */
+model RefreshToken {
+  id        String    @id @default(cuid())
+  jti       String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/** Source de vérité des formulaires (Excel = dérivé / export). */
+model FormSubmission {
+  id              String               @id @default(cuid())
+  userId          String
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payload         Json
+  ipAddress       String
+  processingStatus FormProcessingStatus @default(pending)
+  processingError String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([processingStatus])
 }

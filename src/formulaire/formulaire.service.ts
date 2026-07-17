@@ -7,20 +7,19 @@ import {
 import { createReadStream, existsSync } from 'node:fs';
 import * as path from 'node:path';
 import type { AuthUser } from '../auth/types/auth-user.type';
+import { Prisma } from '../generated/prisma/client.js';
 import { CreateFormDto } from './dto/create-form.dto';
-import { MailService } from '../mail/mail.service';
-import { generatePdf } from '../utils/pdfCreator';
-import { getControleDir, getControleExcelFilePath, saveFormToExcel } from '../utils/saveToExcel';
-import { FormSecurityLoggerService } from './form-security-logger.service';
-import { SecurityAction } from './security-action.enum';
+import { FormProcessingQueue } from './form-processing.queue';
+import { PrismaService } from '../prisma/prisma.service';
+import { getControleDir, getControleExcelFilePath } from '../utils/saveToExcel';
 
 const MAX_SIGNATURE_SIZE = 500 * 1024;
 
 @Injectable()
 export class FormulaireService {
   constructor(
-    private readonly mailService: MailService,
-    private readonly securityLogger: FormSecurityLoggerService,
+    private readonly prisma: PrismaService,
+    private readonly formQueue: FormProcessingQueue,
   ) {}
 
   /**
@@ -51,10 +50,7 @@ export class FormulaireService {
     authUser: AuthUser,
     formData: CreateFormDto,
     ipAddress: string,
-  ): Promise<{ envoiPdf: string; saveExcel: string }> {
-    const user = authUser.nom;
-    const userExcel = { nom: authUser.nom, prenom: authUser.prenom };
-
+  ): Promise<{ id: string; status: string }> {
     if (!formData.carNonPasse) {
       if (!formData.controllerSignature || !formData.chauffeurSignature) {
         throw new BadRequestException(
@@ -62,46 +58,37 @@ export class FormulaireService {
         );
       }
 
-      const validateSignature = (signature: string, name: string) => {
-        const base64Data = signature.includes(',')
-          ? signature.split(',')[1] ?? ''
-          : signature;
-        if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
-          throw new BadRequestException(
-            `Format de signature invalide pour ${name}`,
-          );
-        }
-        const estimatedSize = (base64Data.length * 3) / 4;
-        if (estimatedSize > MAX_SIGNATURE_SIZE) {
-          throw new BadRequestException(
-            `Signature ${name} trop volumineuse (max 500KB)`,
-          );
-        }
-      };
-
-      validateSignature(formData.controllerSignature, 'contrôleur');
-      validateSignature(formData.chauffeurSignature, 'chauffeur');
+      this.validateSignature(formData.controllerSignature, 'contrôleur');
+      this.validateSignature(formData.chauffeurSignature, 'chauffeur');
     }
 
-    const pdfBuffer = await generatePdf(user, formData);
-    const pdfBuffer64 = pdfBuffer.toString('base64');
-
-    const envoiPdf = await this.mailService.sendResume(formData, pdfBuffer64, [
-      authUser.email,
-    ]);
-    const saveExcel = await saveFormToExcel(userExcel, formData);
-
-    this.securityLogger.logFormAction(
-      SecurityAction.FORM_CREATED,
-      authUser,
-      ipAddress,
-      {
-        lieuControle: formData.lieuControle,
-        date: formData.date,
-        client: formData.client,
+    const submission = await this.prisma.formSubmission.create({
+      data: {
+        userId: authUser.id,
+        payload: formData as unknown as Prisma.InputJsonValue,
+        ipAddress,
       },
-    );
+    });
 
-    return { envoiPdf, saveExcel };
+    this.formQueue.enqueue(submission.id);
+
+    return { id: submission.id, status: 'accepted' };
+  }
+
+  private validateSignature(signature: string, name: string): void {
+    const base64Data = signature.includes(',')
+      ? (signature.split(',')[1] ?? '')
+      : signature;
+    if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
+      throw new BadRequestException(
+        `Format de signature invalide pour ${name}`,
+      );
+    }
+    const estimatedSize = (base64Data.length * 3) / 4;
+    if (estimatedSize > MAX_SIGNATURE_SIZE) {
+      throw new BadRequestException(
+        `Signature ${name} trop volumineuse (max 500KB)`,
+      );
+    }
   }
 }

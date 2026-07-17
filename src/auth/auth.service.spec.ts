@@ -6,14 +6,13 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { mockConfigServiceProvider } from '../test/mocks/config.mock';
-import { createMockPrisma, mockPrismaServiceProvider } from '../test/mocks/prisma.mock';
+import { createMockPrisma, type MockPrismaClient, mockPrismaServiceProvider } from '../test/mocks/prisma.mock';
 import { mockMailServiceProvider } from '../test/mocks/mail.mock';
 import { UserService } from '../user/user.service';
 import { BcryptService } from '../utils/bcrpt';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
-import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterInviteDto } from './dto/register-invite.dto';
 
 describe('AuthService', () => {
@@ -44,6 +43,14 @@ describe('AuthService', () => {
     prisma.ipBlock.upsert.mockReset();
     prisma.ipBlock.deleteMany.mockReset();
     prisma.loginAttempts.create.mockReset();
+    prisma.usedInvitation.findUnique.mockReset();
+    prisma.usedInvitation.create.mockReset();
+    prisma.refreshToken.create.mockReset();
+    prisma.refreshToken.findUnique.mockReset();
+    prisma.refreshToken.update.mockReset();
+    prisma.refreshToken.updateMany.mockReset();
+    prisma.$transaction.mockReset();
+    prisma.refreshToken.create.mockResolvedValue({});
     prisma.user.create = userCreate;
     prisma.user.update = userUpdate;
 
@@ -92,8 +99,15 @@ describe('AuthService', () => {
   });
 
   describe('logout', () => {
-    it('should run without error', () => {
-      expect(() => service.logout()).not.toThrow();
+    it('should revoke refresh tokens for the user', async () => {
+      prisma.refreshToken.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.logout('u1');
+
+      expect(prisma.refreshToken.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'u1', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
     });
   });
 
@@ -156,13 +170,13 @@ describe('AuthService', () => {
       expect(result.findUser.email).toBe(authDto.email);
     });
 
-    it('should throw Conflict when email is unknown (under IP threshold)', async () => {
+    it('should throw Unauthorized when email is unknown (under IP threshold)', async () => {
       prisma.ipBlock.findUnique.mockResolvedValue(null);
       findOneUserByEmail.mockResolvedValue(null);
       prisma.ipBlock.upsert.mockResolvedValue({});
 
       await expect(service.login(authDto, ip)).rejects.toBeInstanceOf(
-        ConflictException,
+        UnauthorizedException,
       );
       expect(prisma.ipBlock.upsert).toHaveBeenCalled();
     });
@@ -224,7 +238,7 @@ describe('AuthService', () => {
       userUpdate.mockResolvedValue({});
 
       await expect(service.login(authDto, ip)).rejects.toBeInstanceOf(
-        ConflictException,
+        UnauthorizedException,
       );
 
       expect(userUpdate).toHaveBeenCalledWith({
@@ -236,7 +250,7 @@ describe('AuthService', () => {
       });
     });
 
-    it('should record failed attempt and throw Conflict on bad password', async () => {
+    it('should record failed attempt and throw Unauthorized on bad password', async () => {
       prisma.ipBlock.findUnique.mockResolvedValue(null);
       findOneUserByEmail.mockResolvedValue({
         id: 'u1',
@@ -255,7 +269,7 @@ describe('AuthService', () => {
       userUpdate.mockResolvedValue({});
 
       await expect(service.login(authDto, ip)).rejects.toBeInstanceOf(
-        ConflictException,
+        UnauthorizedException,
       );
       expect(prisma.loginAttempts.create).toHaveBeenCalled();
       expect(userUpdate).toHaveBeenCalled();
@@ -321,7 +335,10 @@ describe('AuthService', () => {
 
       expect(findOneUserByEmail).toHaveBeenCalledWith(dto.email);
       expect(jwtSign).toHaveBeenCalledWith(
-        { email: dto.email },
+        expect.objectContaining({
+          email: dto.email,
+          jti: expect.any(String),
+        }),
         expect.objectContaining({
           secret: 'invitation-secret',
           expiresIn: 86400,
@@ -334,113 +351,154 @@ describe('AuthService', () => {
     });
   });
 
-  describe('register', () => {
-    const dto: CreateUserDto = {
-      email: 'new@example.com',
-      password: 'Aa1!aaaa',
-      nom: 'Dupont',
-      prenom: 'Jean',
-    };
-
-    it('should throw ConflictException when the email is already registered', async () => {
-      findOneUserByEmail.mockResolvedValue({
-        id: 'u1',
-        email: dto.email,
-        password: 'x',
-        nom: 'A',
-        prenom: 'B',
-        role: 'agent',
-        createdAt: new Date(),
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-        updatedAt: new Date(),
+  describe('verifyInvitationToken', () => {
+    it('should return email and jti from valid invitation token', async () => {
+      jwtVerifyAsync.mockResolvedValue({
+        email: '  invite@test.com  ',
+        jti: 'jti-abc',
       });
 
-      await expect(service.register(dto)).rejects.toBeInstanceOf(
+      const result = await service.verifyInvitationToken('token');
+
+      expect(result).toEqual({ email: 'invite@test.com', jti: 'jti-abc' });
+    });
+
+    it('should throw when email is missing in payload', async () => {
+      jwtVerifyAsync.mockResolvedValue({ email: '', jti: 'jti-1' });
+
+      await expect(service.verifyInvitationToken('token')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw when jti is missing in payload', async () => {
+      jwtVerifyAsync.mockResolvedValue({ email: 'inv@test.com' });
+
+      await expect(service.verifyInvitationToken('token')).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw when token verification fails', async () => {
+      jwtVerifyAsync.mockRejectedValue(new Error('expired'));
+
+      await expect(service.verifyInvitationToken('token')).rejects.toThrow(
+        'Invitation invalide ou expirée',
+      );
+    });
+  });
+
+  describe('registerFromInvitation', () => {
+    const dto: RegisterInviteDto = {
+      token: 'invite-token',
+      nom: 'Nom',
+      prenom: 'Pre',
+      password: 'Aa1!bbbb',
+    };
+
+    const createdAt = new Date('2026-03-01');
+
+    const safeCreated = {
+      id: 'id-new',
+      email: 'new@test.com',
+      nom: dto.nom,
+      prenom: dto.prenom,
+      role: 'agent' as const,
+      createdAt,
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+      updatedAt: createdAt,
+    };
+
+    beforeEach(() => {
+      jwtVerifyAsync.mockResolvedValue({
+        email: 'new@test.com',
+        jti: 'jti-register-1',
+      });
+      hashPassword.mockResolvedValue('hashed');
+    });
+
+    it('should create user with agent role and mark invitation as used', async () => {
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: MockPrismaClient) => Promise<unknown>) => {
+          const tx = {
+            usedInvitation: {
+              findUnique: jest.fn().mockResolvedValue(null),
+              create: jest.fn().mockResolvedValue({}),
+            },
+            user: {
+              findUnique: jest.fn().mockResolvedValue(null),
+              create: jest.fn().mockResolvedValue({
+                ...safeCreated,
+                password: 'hashed',
+              }),
+            },
+          };
+          return fn(tx as never);
+        },
+      );
+
+      const result = await service.registerFromInvitation(dto);
+
+      expect(hashPassword).toHaveBeenCalledWith(dto.password);
+      expect(result).toEqual(safeCreated);
+      expect(result).not.toHaveProperty('password');
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('should throw UnauthorizedException when invitation jti was already used', async () => {
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: MockPrismaClient) => Promise<unknown>) => {
+          const tx = {
+            usedInvitation: {
+              findUnique: jest.fn().mockResolvedValue({
+                id: 'used-1',
+                jti: 'jti-register-1',
+                email: 'new@test.com',
+                usedAt: createdAt,
+                createdAt,
+              }),
+              create: jest.fn(),
+            },
+            user: {
+              findUnique: jest.fn(),
+              create: jest.fn(),
+            },
+          };
+          return fn(tx as never);
+        },
+      );
+
+      await expect(service.registerFromInvitation(dto)).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+      expect(hashPassword).not.toHaveBeenCalled();
+    });
+
+    it('should throw ConflictException when email is already registered', async () => {
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: MockPrismaClient) => Promise<unknown>) => {
+          const tx = {
+            usedInvitation: {
+              findUnique: jest.fn().mockResolvedValue(null),
+              create: jest.fn(),
+            },
+            user: {
+              findUnique: jest.fn().mockResolvedValue({
+                id: 'existing',
+                email: 'new@test.com',
+              }),
+              create: jest.fn(),
+            },
+          };
+          return fn(tx as never);
+        },
+      );
+
+      await expect(service.registerFromInvitation(dto)).rejects.toBeInstanceOf(
         ConflictException,
       );
       expect(hashPassword).not.toHaveBeenCalled();
-      expect(userCreate).not.toHaveBeenCalled();
-    });
-
-    it('should hash password, create user and return without password when email is free', async () => {
-      findOneUserByEmail.mockResolvedValue(null);
-      hashPassword.mockResolvedValue('hashed-secret');
-      const createdAt = new Date('2026-01-01');
-      const updatedAt = new Date('2026-01-02');
-      userCreate.mockResolvedValue({
-        id: 'usr_new',
-        email: dto.email,
-        password: 'hashed-secret',
-        nom: dto.nom,
-        prenom: dto.prenom,
-        role: 'agent',
-        createdAt,
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-        updatedAt,
-      });
-
-      const result = await service.register(dto);
-
-      expect(findOneUserByEmail).toHaveBeenCalledWith(dto.email);
-      expect(hashPassword).toHaveBeenCalledWith(dto.password);
-      expect(userCreate).toHaveBeenCalledWith({
-        data: {
-          email: dto.email,
-          password: 'hashed-secret',
-          nom: dto.nom,
-          prenom: dto.prenom,
-        },
-      });
-      expect(result).not.toHaveProperty('password');
-      expect(result).toEqual({
-        id: 'usr_new',
-        email: dto.email,
-        nom: dto.nom,
-        prenom: dto.prenom,
-        role: 'agent',
-        createdAt,
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-        updatedAt,
-      });
-    });
-
-    it('should pass optional role to prisma when provided', async () => {
-      findOneUserByEmail.mockResolvedValue(null);
-      hashPassword.mockResolvedValue('hashed-secret');
-      const dtoWithRole: CreateUserDto = {
-        ...dto,
-        email: 'chef@example.com',
-        role: 'chef_service',
-      };
-      const createdAt = new Date();
-      const updatedAt = new Date();
-      userCreate.mockResolvedValue({
-        id: 'id2',
-        email: dtoWithRole.email,
-        password: 'hashed-secret',
-        nom: dtoWithRole.nom,
-        prenom: dtoWithRole.prenom,
-        role: 'chef_service',
-        createdAt,
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-        updatedAt,
-      });
-
-      await service.register(dtoWithRole);
-
-      expect(userCreate).toHaveBeenCalledWith({
-        data: {
-          email: dtoWithRole.email,
-          password: 'hashed-secret',
-          nom: dtoWithRole.nom,
-          prenom: dtoWithRole.prenom,
-          role: 'chef_service',
-        },
-      });
     });
   });
 
@@ -483,7 +541,7 @@ describe('AuthService', () => {
   });
 
   describe('issueTokens', () => {
-    it('should sign access and refresh JWTs', () => {
+    it('should sign access and refresh JWTs and persist refresh jti', async () => {
       const user = {
         id: 'u1',
         email: 'u@test.com',
@@ -496,12 +554,13 @@ describe('AuthService', () => {
         lockedUntil: null,
       };
 
-      const tokens = service.issueTokens(user);
+      const tokens = await service.issueTokens(user);
 
       expect(tokens.access_token).toBe('access-jwt');
       expect(tokens.refresh_token).toBe('refresh-jwt');
       expect(tokens.user).toEqual(user);
       expect(jwtSign).toHaveBeenCalledTimes(2);
+      expect(prisma.refreshToken.create).toHaveBeenCalled();
     });
   });
 
@@ -519,7 +578,14 @@ describe('AuthService', () => {
     };
 
     it('should return a new token pair for a valid refresh JWT', async () => {
-      jwtVerifyAsync.mockResolvedValue({ sub: 'u1' });
+      jwtVerifyAsync.mockResolvedValue({ sub: 'u1', jti: 'jti-1' });
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        jti: 'jti-1',
+        userId: 'u1',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+      prisma.refreshToken.update.mockResolvedValue({});
       findSafeUserById.mockResolvedValue(safeUser);
 
       const result = await service.rotateWithRefreshToken('refresh-jwt');
@@ -529,6 +595,7 @@ describe('AuthService', () => {
       });
       expect(result.access_token).toBe('access-jwt');
       expect(result.user.id).toBe('u1');
+      expect(prisma.refreshToken.update).toHaveBeenCalled();
     });
 
     it('should throw when refresh JWT is invalid', async () => {
@@ -539,72 +606,29 @@ describe('AuthService', () => {
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
 
-    it('should throw when user no longer exists', async () => {
-      jwtVerifyAsync.mockResolvedValue({ sub: 'gone' });
-      findSafeUserById.mockResolvedValue(null);
+    it('should throw when refresh is revoked or missing', async () => {
+      jwtVerifyAsync.mockResolvedValue({ sub: 'u1', jti: 'jti-1' });
+      prisma.refreshToken.findUnique.mockResolvedValue(null);
 
       await expect(
         service.rotateWithRefreshToken('refresh-jwt'),
       ).rejects.toBeInstanceOf(UnauthorizedException);
     });
-  });
 
-  describe('verifyInvitationToken', () => {
-    it('should return email from valid invitation token', async () => {
-      jwtVerifyAsync.mockResolvedValue({ email: '  invite@test.com  ' });
-
-      const result = await service.verifyInvitationToken('token');
-
-      expect(result).toEqual({ email: 'invite@test.com' });
-    });
-
-    it('should throw when email is missing in payload', async () => {
-      jwtVerifyAsync.mockResolvedValue({ email: '' });
-
-      await expect(service.verifyInvitationToken('token')).rejects.toBeInstanceOf(
-        UnauthorizedException,
-      );
-    });
-
-    it('should throw when token verification fails', async () => {
-      jwtVerifyAsync.mockRejectedValue(new Error('expired'));
-
-      await expect(service.verifyInvitationToken('token')).rejects.toThrow(
-        'Invitation invalide ou expirée',
-      );
-    });
-  });
-
-  describe('registerFromInvitation', () => {
-    it('should register user with email from invitation token', async () => {
-      jwtVerifyAsync.mockResolvedValue({ email: 'new@test.com' });
-      findOneUserByEmail.mockResolvedValue(null);
-      hashPassword.mockResolvedValue('hashed');
-      const createdAt = new Date();
-      userCreate.mockResolvedValue({
-        id: 'id-new',
-        email: 'new@test.com',
-        password: 'hashed',
-        nom: 'Nom',
-        prenom: 'Pre',
-        role: 'agent',
-        createdAt,
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-        updatedAt: createdAt,
+    it('should throw when user no longer exists', async () => {
+      jwtVerifyAsync.mockResolvedValue({ sub: 'gone', jti: 'jti-1' });
+      prisma.refreshToken.findUnique.mockResolvedValue({
+        jti: 'jti-1',
+        userId: 'gone',
+        revokedAt: null,
+        expiresAt: new Date(Date.now() + 60_000),
       });
+      prisma.refreshToken.update.mockResolvedValue({});
+      findSafeUserById.mockResolvedValue(null);
 
-      const dto: RegisterInviteDto = {
-        token: 'invite-token',
-        nom: 'Nom',
-        prenom: 'Pre',
-        password: 'Aa1!bbbb',
-      };
-
-      const result = await service.registerFromInvitation(dto);
-
-      expect(result.email).toBe('new@test.com');
-      expect(userCreate).toHaveBeenCalled();
+      await expect(
+        service.rotateWithRefreshToken('refresh-jwt'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
   });
 });

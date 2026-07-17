@@ -5,6 +5,7 @@
     "noEmit": true,
     "declaration": false,
     "ignoreDeprecations": "6.0",
+    "typeRoots": ["./node_modules/@types"],
     "types": ["jest", "node"]
   },
   "include": ["src/**/*.ts", "test/**/*.ts"],

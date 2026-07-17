@@ -5,20 +5,22 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { User } from '../generated/prisma/client.js';
+import { Role } from '../generated/prisma/client.js';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserService } from '../user/user.service';
 import { BcryptService } from '../utils/bcrpt';
 import type { AuthDto } from './dto/auth.dto';
 import type { CreateInvitationDto } from './dto/create-invitation.dto';
-import type { CreateUserDto } from './dto/create-user.dto';
 import type { RegisterInviteDto } from './dto/register-invite.dto';
 import type { JwtPayload } from './types/jwt-payload.type';
 import type { AuthUser, PublicUser } from './types/auth-user.type';
 import type { RefreshJwtPayload } from './types/refresh-jwt-payload.type';
+import type { InvitationJwtPayload } from './types/invitation-jwt-payload.type';
 
 export type TokenPair = {
   access_token: string;
@@ -27,9 +29,7 @@ export type TokenPair = {
 };
 
 export type LoginSuccess = {
-  /** Jeton Bearer (access JWT). */
   access_token: string;
-  /** Valeur du refresh JWT (à placer en cookie httpOnly côté contrôleur). */
   cookie: string;
   findUser: PublicUser;
 };
@@ -48,15 +48,35 @@ export class AuthService {
   ) {}
 
   /**
-   * Déconnexion stateless : le client abandonne le Bearer ; le refresh est retiré côté HTTP (cookie).
+   * Révoque le refresh JWT (jti) et tous les refresh actifs de l’utilisateur.
    */
-  logout(): void {
-    return;
+  async logout(userId: string, refreshToken?: string): Promise<void> {
+    if (refreshToken) {
+      try {
+        const refreshSecret = this.config.getOrThrow<string>(
+          'REFRESH_TOKEN_SECRET',
+        );
+        const payload = await this.jwtService.verifyAsync<RefreshJwtPayload>(
+          refreshToken,
+          { secret: refreshSecret },
+        );
+        if (payload.sub === userId && payload.jti) {
+          await this.prisma.refreshToken.updateMany({
+            where: { jti: payload.jti, revokedAt: null },
+            data: { revokedAt: new Date() },
+          });
+          return;
+        }
+      } catch {
+        /* token déjà invalide — on révoque tout de même les sessions user */
+      }
+    }
+    await this.prisma.refreshToken.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
   }
 
-  /**
-   * Connexion avec contrôle IP (e-mails inexistants), verrouillage compte et JWT (Bearer + refresh).
-   */
   async login(userData: AuthDto, ipAddress: string): Promise<LoginSuccess> {
     const ipBlock = await this.prisma.ipBlock.findUnique({
       where: { ipAddress },
@@ -130,7 +150,7 @@ export class AuthService {
         data: { failedLoginAttempts: failed, lockedUntil },
       });
 
-      throw new ConflictException('Identifiants incorrects');
+      throw new UnauthorizedException('Identifiants incorrects');
     }
 
     await this.prisma.user.update({
@@ -146,7 +166,7 @@ export class AuthService {
 
     const { password: _pw, ...publicUser } = findUser;
     void _pw;
-    const tokens = this.issueTokens(publicUser);
+    const tokens = await this.issueTokens(publicUser);
 
     return {
       access_token: tokens.access_token,
@@ -196,15 +216,9 @@ export class AuthService {
       );
     }
 
-    throw new ConflictException('Identifiants incorrects');
+    throw new UnauthorizedException('Identifiants incorrects');
   }
 
-  /**
-   * Validate user credentials
-   * @param email - The email of the user
-   * @param password - The password of the user
-   * @returns The user found or null if not found
-   */
   public async validateUser(
     email: string,
     password: string,
@@ -216,18 +230,15 @@ export class AuthService {
         user.password,
       );
       if (isPasswordValid) {
-        const { password, ...safeUser } = user;
-        void password;
+        const { password: _pw, ...safeUser } = user;
+        void _pw;
         return safeUser;
       }
     }
     return null;
   }
 
-  /**
-   * Émet une paire access + refresh pour un utilisateur déjà authentifié (ex. après LocalStrategy).
-   */
-  issueTokens(user: AuthUser): TokenPair {
+  async issueTokens(user: AuthUser): Promise<TokenPair> {
     const accessSecret = this.config.getOrThrow<string>('ACCESS_TOKEN_SECRET');
     const refreshSecret = this.config.getOrThrow<string>(
       'REFRESH_TOKEN_SECRET',
@@ -238,9 +249,13 @@ export class AuthService {
     const refreshExpiresSec = Number(
       this.config.get<string>('REFRESH_TOKEN_EXPIRES_SEC') ?? '604800',
     );
+    const refreshTtl = Number.isFinite(refreshExpiresSec)
+      ? refreshExpiresSec
+      : 604800;
+    const jti = randomUUID();
 
     const accessPayload: JwtPayload = { sub: user.id };
-    const refreshPayload: RefreshJwtPayload = { sub: user.id };
+    const refreshPayload: RefreshJwtPayload = { sub: user.id, jti };
 
     const access_token = this.jwtService.sign(accessPayload, {
       secret: accessSecret,
@@ -248,17 +263,20 @@ export class AuthService {
     });
     const refresh_token = this.jwtService.sign(refreshPayload, {
       secret: refreshSecret,
-      expiresIn: Number.isFinite(refreshExpiresSec)
-        ? refreshExpiresSec
-        : 604800,
+      expiresIn: refreshTtl,
+    });
+
+    await this.prisma.refreshToken.create({
+      data: {
+        jti,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + refreshTtl * 1000),
+      },
     });
 
     return { access_token, refresh_token, user };
   }
 
-  /**
-   * Vérifie un refresh JWT et émet une nouvelle paire de jetons.
-   */
   async rotateWithRefreshToken(refreshToken: string): Promise<TokenPair> {
     const refreshSecret = this.config.getOrThrow<string>(
       'REFRESH_TOKEN_SECRET',
@@ -272,6 +290,27 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('Refresh token invalide ou expiré');
     }
+    if (!payload.jti) {
+      throw new UnauthorizedException('Refresh token invalide');
+    }
+
+    const stored = await this.prisma.refreshToken.findUnique({
+      where: { jti: payload.jti },
+    });
+    if (
+      !stored ||
+      stored.userId !== payload.sub ||
+      stored.revokedAt ||
+      stored.expiresAt < new Date()
+    ) {
+      throw new UnauthorizedException('Refresh token invalide ou révoqué');
+    }
+
+    await this.prisma.refreshToken.update({
+      where: { jti: payload.jti },
+      data: { revokedAt: new Date() },
+    });
+
     const user = await this.userService.findSafeUserById(payload.sub);
     if (!user) {
       throw new UnauthorizedException();
@@ -279,9 +318,6 @@ export class AuthService {
     return this.issueTokens(user);
   }
 
-  /**
-   * Envoie une invitation par e-mail si l'adresse n'est pas déjà enregistrée.
-   */
   async invitationUser(invitationData: CreateInvitationDto): Promise<void> {
     const existing = await this.userService.findOneUserByEmail(
       invitationData.email,
@@ -298,7 +334,7 @@ export class AuthService {
     );
 
     const token = this.jwtService.sign(
-      { email: invitationData.email },
+      { email: invitationData.email, jti: randomUUID() },
       {
         secret: invitationSecret,
         expiresIn: Number.isFinite(expiresSec) ? expiresSec : 604800,
@@ -313,23 +349,21 @@ export class AuthService {
     await this.mailService.sendInvitationEmail(invitationData.email, link);
   }
 
-  /**
-   * Vérifie un jeton d’invitation (e-mail) et retourne l’adresse associée.
-   */
-  async verifyInvitationToken(token: string): Promise<{ email: string }> {
+  async verifyInvitationToken(token: string): Promise<InvitationJwtPayload> {
     const invitationSecret = this.config.getOrThrow<string>(
       'SECRET_KEY_INVITATION',
     );
     try {
-      const payload = await this.jwtService.verifyAsync<{ email?: string }>(
-        token,
-        { secret: invitationSecret },
-      );
+      const payload = await this.jwtService.verifyAsync<{
+        email?: string;
+        jti?: string;
+      }>(token, { secret: invitationSecret });
       const email = payload.email?.trim();
-      if (!email) {
+      const jti = payload.jti?.trim();
+      if (!email || !jti) {
         throw new UnauthorizedException('Invitation invalide');
       }
-      return { email };
+      return { email, jti };
     } catch (err) {
       if (err instanceof UnauthorizedException) {
         throw err;
@@ -338,46 +372,41 @@ export class AuthService {
     }
   }
 
-  /**
-   * Inscription via lien d’invitation (e-mail vérifié dans le jeton).
-   */
   async registerFromInvitation(
     dto: RegisterInviteDto,
   ): Promise<Omit<User, 'password'>> {
-    const { email } = await this.verifyInvitationToken(dto.token);
-    return this.register({
-      email,
-      nom: dto.nom,
-      prenom: dto.prenom,
-      password: dto.password,
+    const { email, jti } = await this.verifyInvitationToken(dto.token);
+
+    return this.prisma.$transaction(async (tx) => {
+      const used = await tx.usedInvitation.findUnique({ where: { jti } });
+      if (used) {
+        throw new UnauthorizedException('Invitation déjà utilisée');
+      }
+
+      const existing = await tx.user.findUnique({ where: { email } });
+      if (existing) {
+        throw new ConflictException('Cet e-mail existe déjà.');
+      }
+
+      const hashedPassword = await this.bcryptService.hashPassword(dto.password);
+
+      const created = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          nom: dto.nom,
+          prenom: dto.prenom,
+          role: Role.agent,
+        },
+      });
+
+      await tx.usedInvitation.create({
+        data: { jti, email },
+      });
+
+      const { password, ...safe } = created;
+      void password;
+      return safe;
     });
-  }
-
-  /**
-   * Crée un compte utilisateur si l'e-mail est libre.
-   */
-  async register(userData: CreateUserDto): Promise<Omit<User, 'password'>> {
-    const existing = await this.userService.findOneUserByEmail(userData.email);
-    if (existing) {
-      throw new ConflictException('Cet e-mail existe déjà.');
-    }
-
-    const hashedPassword = await this.bcryptService.hashPassword(
-      userData.password,
-    );
-
-    const created = await this.prisma.user.create({
-      data: {
-        email: userData.email,
-        password: hashedPassword,
-        nom: userData.nom,
-        prenom: userData.prenom,
-        ...(userData.role !== undefined ? { role: userData.role } : {}),
-      },
-    });
-
-    const { password, ...safe } = created;
-    void password;
-    return safe;
   }
 }

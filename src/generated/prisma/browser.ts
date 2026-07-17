@@ -32,3 +32,18 @@ export type LoginAttempts = Prisma.LoginAttemptsModel
  * 
  */
 export type IpBlock = Prisma.IpBlockModel
+/**
+ * Model UsedInvitation
+ * * Jeton d’invitation consommé (inscription réussie via register/invite).
+ */
+export type UsedInvitation = Prisma.UsedInvitationModel
+/**
+ * Model RefreshToken
+ * * Refresh JWT actifs (révocation / rotation).
+ */
+export type RefreshToken = Prisma.RefreshTokenModel
+/**
+ * Model FormSubmission
+ * * Source de vérité des formulaires (Excel = dérivé / export).
+ */
+export type FormSubmission = Prisma.FormSubmissionModel

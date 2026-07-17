@@ -14,6 +14,7 @@ describe('UserService', () => {
   beforeEach(async () => {
     prisma.user.findUnique.mockReset();
     prisma.user.findMany.mockReset();
+    prisma.user.count.mockReset();
     prisma.user.update.mockReset();
     prisma.user.delete.mockReset();
     hashPassword.mockReset();
@@ -64,11 +65,10 @@ describe('UserService', () => {
       expect(await service.findSafeUserById('missing')).toBeNull();
     });
 
-    it('should strip password from found user', async () => {
+    it('should select public fields only', async () => {
       prisma.user.findUnique.mockResolvedValue({
         id: 'id1',
         email: 'e@test.com',
-        password: 'secret',
         nom: 'N',
         prenom: 'P',
         role: 'agent',
@@ -80,48 +80,55 @@ describe('UserService', () => {
 
       const result = await service.findSafeUserById('id1');
 
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'id1' },
+        select: expect.objectContaining({ id: true, email: true }),
+      });
       expect(result?.id).toBe('id1');
       expect(result).not.toHaveProperty('password');
     });
   });
 
   describe('getAllUser', () => {
-    it('should return all users without password', async () => {
-      const u1: User = {
+    it('should return paginated users without password', async () => {
+      const u1 = {
         id: '1',
         email: 'a@test.com',
-        password: 'h1',
         nom: 'A',
         prenom: 'B',
-        role: 'agent',
+        role: 'agent' as const,
         createdAt: new Date(),
         failedLoginAttempts: 0,
         lockedUntil: null,
         updatedAt: new Date(),
       };
-      const u2: User = {
+      const u2 = {
         id: '2',
         email: 'c@test.com',
-        password: 'h2',
         nom: 'C',
         prenom: 'D',
-        role: 'agent',
+        role: 'agent' as const,
         createdAt: new Date(),
         failedLoginAttempts: 0,
         lockedUntil: null,
         updatedAt: new Date(),
       };
       prisma.user.findMany.mockResolvedValue([u1, u2]);
+      prisma.user.count.mockResolvedValue(2);
 
       const result = await service.getAllUser();
 
       expect(prisma.user.findMany).toHaveBeenCalledWith({
+        select: expect.any(Object),
         orderBy: { createdAt: 'desc' },
+        skip: 0,
+        take: 50,
       });
-      expect(result).toHaveLength(2);
-      expect(result[0]).not.toHaveProperty('password');
-      expect(result[0].email).toBe('a@test.com');
-      expect(result[1].email).toBe('c@test.com');
+      expect(result.items).toHaveLength(2);
+      expect(result.total).toBe(2);
+      expect(result.items[0]).not.toHaveProperty('password');
+      expect(result.items[0].email).toBe('a@test.com');
+      expect(result.items[1].email).toBe('c@test.com');
     });
   });
 
@@ -135,13 +142,12 @@ describe('UserService', () => {
     });
 
     it('should return user without password when found', async () => {
-      const u: User = {
+      const u = {
         id: 'id1',
         email: 'e@test.com',
-        password: 'secret',
         nom: 'N',
         prenom: 'P',
-        role: 'chef_service',
+        role: 'chef_service' as const,
         createdAt: new Date(),
         failedLoginAttempts: 0,
         lockedUntil: null,
@@ -151,7 +157,10 @@ describe('UserService', () => {
 
       const result = await service.getUserById('id1');
 
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'id1' } });
+      expect(prisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'id1' },
+        select: expect.any(Object),
+      });
       expect(result).not.toHaveProperty('password');
       expect(result.id).toBe('id1');
       expect(result.email).toBe('e@test.com');
@@ -201,13 +210,12 @@ describe('UserService', () => {
         updatedAt: new Date(),
       });
       hashPassword.mockResolvedValue('newhash');
-      const updated: User = {
+      const updated = {
         id: 'id1',
         email: 'e@test.com',
-        password: 'newhash',
         nom: 'New',
         prenom: 'P',
-        role: 'agent',
+        role: 'agent' as const,
         createdAt: new Date(),
         failedLoginAttempts: 0,
         lockedUntil: null,
@@ -222,6 +230,7 @@ describe('UserService', () => {
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: 'id1' },
         data: { nom: 'New', password: 'newhash' },
+        select: expect.any(Object),
       });
       expect(result).not.toHaveProperty('password');
       expect(result.nom).toBe('New');

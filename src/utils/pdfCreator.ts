@@ -1,5 +1,5 @@
-import puppeteer from 'puppeteer';
 import type { CreateFormDto } from '../formulaire/dto/create-form.dto';
+import { getSharedBrowser } from './puppeteer-browser';
 
 function escapeHtml(input: unknown): string {
   return String(input ?? '')
@@ -337,19 +337,16 @@ function htmlFormulaire(controleur: string, form: CreateFormDto): string {
 
 /**
  * Génère un PDF (A4) à partir du nom du contrôleur et des données formulaire.
+ * Réutilise un Chromium partagé (pas de launch/close à chaque requête).
  */
 export async function generatePdf(
   controleur: string,
   formulaire: CreateFormDto,
 ): Promise<Buffer> {
   const html = htmlFormulaire(controleur, formulaire);
-  let browser: Awaited<ReturnType<typeof puppeteer.launch>> | undefined;
+  const browser = await getSharedBrowser();
+  const page = await browser.newPage();
   try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-    const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'load' });
     const pdfBytes = await page.pdf({
       format: 'A4',
@@ -358,8 +355,6 @@ export async function generatePdf(
     });
     return Buffer.from(pdfBytes);
   } finally {
-    if (browser) {
-      await browser.close().catch(() => undefined);
-    }
+    await page.close().catch(() => undefined);
   }
 }

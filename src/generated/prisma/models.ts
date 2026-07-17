@@ -11,4 +11,7 @@
 export type * from './models/User.js'
 export type * from './models/LoginAttempts.js'
 export type * from './models/IpBlock.js'
+export type * from './models/UsedInvitation.js'
+export type * from './models/RefreshToken.js'
+export type * from './models/FormSubmission.js'
 export type * from './commonInputTypes.js'

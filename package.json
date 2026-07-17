@@ -101,7 +101,6 @@
       "!src/main.ts",
       "!src/**/*.module.ts",
       "!src/**/*.dto.ts",
-      "!src/auth/guards/local-auth.guard.ts",
       "!src/generated/**",
       "!src/test/**"
     ],

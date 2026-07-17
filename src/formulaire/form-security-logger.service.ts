@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import type { AuthUser } from '../auth/types/auth-user.type';
 import { SecurityAction } from './security-action.enum';
+
+type FormActor = {
+  id: string;
+  email: string;
+  nom: string;
+  prenom: string;
+};
 
 @Injectable()
 export class FormSecurityLoggerService {
@@ -8,7 +14,7 @@ export class FormSecurityLoggerService {
 
   logFormAction(
     action: SecurityAction,
-    user: AuthUser,
+    user: FormActor,
     ipAddress: string,
     meta: {
       lieuControle: string;

@@ -25,6 +25,7 @@ import {
   InvitationVerifyResponseDto,
 } from '../common/dto/auth-responses.dto';
 import { UserResponseDto } from '../common/dto/user-response.dto';
+import { getClientIp } from '../common/get-client-ip';
 import { toUserResponseDto } from '../common/serialize-user';
 import type { Request, Response } from 'express';
 import { Role } from '../generated/prisma/client.js';
@@ -36,7 +37,6 @@ import { AuthService } from './auth.service';
 import { Roles } from './decorators/roles.decorator';
 import { AuthDto } from './dto/auth.dto';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
-import { CreateUserDto } from './dto/create-user.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { RegisterInviteDto } from './dto/register-invite.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -80,18 +80,6 @@ export class AuthController {
     });
   }
 
-  private getClientIp(req: Request): string {
-    const forwarded = req.headers['x-forwarded-for'];
-    if (typeof forwarded === 'string' && forwarded.length > 0) {
-      return forwarded.split(',')[0].trim();
-    }
-    const xReal = req.headers['x-real-ip'];
-    if (typeof xReal === 'string' && xReal.length > 0) {
-      return xReal.trim();
-    }
-    return req.socket.remoteAddress ?? '0.0.0.0';
-  }
-
   @Get('invitation/verify/:token')
   @HttpCode(200)
   @ApiOperation({ summary: 'Vérifier un jeton d’invitation' })
@@ -108,22 +96,13 @@ export class AuthController {
   @HttpCode(201)
   @ApiOperation({
     summary: 'Inscription via lien d’invitation',
-    description: 'Le jeton est celui reçu par e-mail ; l’adresse e-mail est extraite côté serveur.',
+    description:
+      'Le jeton est celui reçu par e-mail ; l’adresse e-mail est extraite côté serveur.',
   })
   @ApiBody({ type: RegisterInviteDto })
   @ApiCreatedResponse({ type: UserResponseDto })
   async registerInvite(@Body() dto: RegisterInviteDto) {
     const user = await this.authService.registerFromInvitation(dto);
-    return toUserResponseDto(user);
-  }
-
-  @Post('register')
-  @HttpCode(201)
-  @ApiOperation({ summary: 'Inscription' })
-  @ApiBody({ type: CreateUserDto })
-  @ApiCreatedResponse({ type: UserResponseDto })
-  async register(@Body() dto: CreateUserDto) {
-    const user = await this.authService.register(dto);
     return toUserResponseDto(user);
   }
 
@@ -148,7 +127,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Connexion',
     description:
-      'Access JWT (Bearer) + refresh JWT dans le corps ; cookie httpOnly refresh (web). Contrôle IP / verrouillage compte.',
+      'Access JWT (Bearer) + cookie httpOnly refresh. Le refresh n’est plus renvoyé dans le corps JSON (web).',
   })
   @ApiBody({ type: AuthDto })
   @ApiOkResponse({ type: AuthTokensResponseDto })
@@ -158,14 +137,10 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.login(
-      userData,
-      this.getClientIp(req),
-    );
+    const result = await this.authService.login(userData, getClientIp(req));
     this.setRefreshCookie(res, result.cookie);
     return {
       access_token: result.access_token,
-      refresh_token: result.cookie,
       user: toUserResponseDto(result.findUser),
     };
   }
@@ -175,7 +150,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Rafraîchir les jetons',
     description:
-      'Lit le refresh depuis le cookie httpOnly (web) ou le corps `refresh_token` (mobile).',
+      'Lit le refresh depuis le cookie httpOnly (web) ou le corps `refresh_token` (clients natifs). Rotation + révocation de l’ancien jti.',
   })
   @ApiBody({ type: RefreshDto, required: false })
   @ApiOkResponse({ type: AuthTokensResponseDto })
@@ -196,7 +171,6 @@ export class AuthController {
     this.setRefreshCookie(res, tokens.refresh_token);
     return {
       access_token: tokens.access_token,
-      refresh_token: tokens.refresh_token,
       user: toUserResponseDto(tokens.user),
     };
   }
@@ -208,10 +182,14 @@ export class AuthController {
   @ApiOperation({
     summary: 'Déconnexion',
     description:
-      'Utilisateur connecté uniquement. Supprime le cookie refresh côté navigateur.',
+      'Révoque le refresh en base et supprime le cookie httpOnly.',
   })
-  logout(@Res({ passthrough: true }) res: Response) {
-    this.authService.logout();
+  async logout(
+    @Req() req: RequestWithUser,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const fromCookie = req.cookies?.[AUTH_REFRESH_COOKIE] as string | undefined;
+    await this.authService.logout(req.user.id, fromCookie);
     this.clearRefreshCookie(res);
   }
 

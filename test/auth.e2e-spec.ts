@@ -2,6 +2,7 @@ import { applyE2eEnv, E2E_SEEDER_EMAIL, E2E_SEEDER_PASSWORD } from './helpers/e2
 import { resetE2eDatabase } from './helpers/e2e-database';
 import { createE2eApp, type E2eApp } from './helpers/create-e2e-app';
 import request from 'supertest';
+import { JwtService } from '@nestjs/jwt';
 import { AUTH_REFRESH_COOKIE } from '../src/auth/auth.constants';
 
 applyE2eEnv();
@@ -110,5 +111,48 @@ describe('Auth (e2e)', () => {
       .post('/auth/logout')
       .set('Authorization', `Bearer ${login.body.access_token}`)
       .expect(204);
+  });
+
+  it('POST /auth/register — route supprimée → 404', () => {
+    return request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        email: 'open@e2e.test.local',
+        password: 'Aa1!openreg',
+        nom: 'Open',
+        prenom: 'Reg',
+      })
+      .expect(404);
+  });
+
+  it('POST /auth/register/invite — jeton à usage unique', async () => {
+    const jwtService = app.get(JwtService);
+    const inviteEmail = 'invite-once@e2e.test.local';
+    const token = jwtService.sign(
+      { email: inviteEmail, jti: 'e2e-single-use-jti' },
+      {
+        secret: process.env.SECRET_KEY_INVITATION,
+        expiresIn: 3600,
+      },
+    );
+    const body = {
+      token,
+      nom: 'Invite',
+      prenom: 'Once',
+      password: 'Aa1!invite',
+    };
+
+    const created = await request(app.getHttpServer())
+      .post('/auth/register/invite')
+      .send(body)
+      .expect(201);
+
+    expect(created.body.email).toBe(inviteEmail);
+    expect(created.body.role).toBe('agent');
+
+    await request(app.getHttpServer())
+      .post('/auth/register/invite')
+      .send(body)
+      .expect(401);
   });
 });

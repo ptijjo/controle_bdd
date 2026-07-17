@@ -53,7 +53,10 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   LoginAttempts: 'LoginAttempts',
-  IpBlock: 'IpBlock'
+  IpBlock: 'IpBlock',
+  UsedInvitation: 'UsedInvitation',
+  RefreshToken: 'RefreshToken',
+  FormSubmission: 'FormSubmission'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -108,6 +111,43 @@ export const IpBlockScalarFieldEnum = {
 export type IpBlockScalarFieldEnum = (typeof IpBlockScalarFieldEnum)[keyof typeof IpBlockScalarFieldEnum]
 
 
+export const UsedInvitationScalarFieldEnum = {
+  id: 'id',
+  jti: 'jti',
+  email: 'email',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type UsedInvitationScalarFieldEnum = (typeof UsedInvitationScalarFieldEnum)[keyof typeof UsedInvitationScalarFieldEnum]
+
+
+export const RefreshTokenScalarFieldEnum = {
+  id: 'id',
+  jti: 'jti',
+  userId: 'userId',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt'
+} as const
+
+export type RefreshTokenScalarFieldEnum = (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum]
+
+
+export const FormSubmissionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  payload: 'payload',
+  ipAddress: 'ipAddress',
+  processingStatus: 'processingStatus',
+  processingError: 'processingError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type FormSubmissionScalarFieldEnum = (typeof FormSubmissionScalarFieldEnum)[keyof typeof FormSubmissionScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -116,10 +156,34 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const NullsOrder = {
   first: 'first',
   last: 'last'
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+export const QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+} as const
+
+export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 

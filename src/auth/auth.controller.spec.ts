@@ -17,7 +17,6 @@ describe('AuthController', () => {
   let controller: AuthController;
   const login = jest.fn();
   const logout = jest.fn();
-  const register = jest.fn();
   const invitationUser = jest.fn();
   const verifyInvitationToken = jest.fn();
   const registerFromInvitation = jest.fn();
@@ -27,7 +26,6 @@ describe('AuthController', () => {
   beforeEach(async () => {
     login.mockReset();
     logout.mockReset();
-    register.mockReset();
     invitationUser.mockReset();
     verifyInvitationToken.mockReset();
     registerFromInvitation.mockReset();
@@ -50,7 +48,6 @@ describe('AuthController', () => {
             rotateWithRefreshToken,
             login,
             logout,
-            register,
             invitationUser,
             verifyInvitationToken,
             registerFromInvitation,
@@ -74,24 +71,6 @@ describe('AuthController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
-  });
-
-  describe('register', () => {
-    it('should return the result of authService.register', async () => {
-      const dto = {
-        email: 'n@t.com',
-        password: 'Aa1!aaaa',
-        nom: 'D',
-        prenom: 'J',
-      };
-      const created = { id: '1', email: dto.email, nom: dto.nom, prenom: dto.prenom };
-      register.mockResolvedValue(created);
-
-      const result = await controller.register(dto as never);
-
-      expect(register).toHaveBeenCalledWith(dto);
-      expect(result).toEqual(created);
-    });
   });
 
   describe('invitation', () => {
@@ -135,7 +114,7 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should call login with client IP, set refresh cookie and return tokens', async () => {
+    it('should call login with socket IP by default, set cookie, omit refresh in body', async () => {
       const userData = { email: 'u@t.com', password: 'Aa1!aaaa' };
       login.mockResolvedValue({
         access_token: 'at',
@@ -145,13 +124,14 @@ describe('AuthController', () => {
       const cookie = jest.fn();
       const res = { cookie } as unknown as Response;
       const req = {
+        app: { get: () => false },
         headers: { 'x-forwarded-for': '198.51.100.2, 10.0.0.1' },
         socket: { remoteAddress: '10.0.0.1' },
       } as unknown as Request;
 
       const result = await controller.login(userData as never, req, res);
 
-      expect(login).toHaveBeenCalledWith(userData, '198.51.100.2');
+      expect(login).toHaveBeenCalledWith(userData, '10.0.0.1');
       expect(cookie).toHaveBeenCalledWith(
         AUTH_REFRESH_COOKIE,
         'rt',
@@ -164,12 +144,12 @@ describe('AuthController', () => {
       );
       expect(result).toEqual({
         access_token: 'at',
-        refresh_token: 'rt',
         user: { id: '1', email: 'u@t.com' },
       });
+      expect(result).not.toHaveProperty('refresh_token');
     });
 
-    it('should use x-real-ip when x-forwarded-for is absent', async () => {
+    it('should use x-forwarded-for when trust proxy is enabled', async () => {
       login.mockResolvedValue({
         access_token: 'at',
         cookie: 'rt',
@@ -177,8 +157,9 @@ describe('AuthController', () => {
       });
       const res = { cookie: jest.fn() } as unknown as Response;
       const req = {
-        headers: { 'x-real-ip': ' 203.0.113.9 ' },
-        socket: { remoteAddress: '127.0.0.1' },
+        app: { get: (k: string) => (k === 'trust proxy' ? 1 : undefined) },
+        headers: { 'x-forwarded-for': '198.51.100.2, 10.0.0.1' },
+        socket: { remoteAddress: '10.0.0.1' },
       } as unknown as Request;
 
       await controller.login(
@@ -189,7 +170,7 @@ describe('AuthController', () => {
 
       expect(login).toHaveBeenCalledWith(
         { email: 'u@t.com', password: 'Aa1!aaaa' },
-        '203.0.113.9',
+        '198.51.100.2',
       );
     });
 
@@ -201,6 +182,7 @@ describe('AuthController', () => {
       });
       const res = { cookie: jest.fn() } as unknown as Response;
       const req = {
+        app: { get: () => false },
         headers: {},
         socket: { remoteAddress: '5.6.7.8' },
       } as unknown as Request;
@@ -240,7 +222,7 @@ describe('AuthController', () => {
         expect.objectContaining({ path: AUTH_REFRESH_COOKIE_PATH }),
       );
       expect(result.access_token).toBe('na');
-      expect(result.refresh_token).toBe('nr');
+      expect(result).not.toHaveProperty('refresh_token');
     });
 
     it('should use refresh_token from body when cookie absent', async () => {
@@ -269,13 +251,18 @@ describe('AuthController', () => {
   });
 
   describe('logout', () => {
-    it('should call authService.logout and clear refresh cookie', () => {
+    it('should revoke session and clear refresh cookie', async () => {
+      logout.mockResolvedValue(undefined);
       const clearCookie = jest.fn();
       const res = { clearCookie } as unknown as Response;
+      const req = {
+        user: { id: 'u1' },
+        cookies: { [AUTH_REFRESH_COOKIE]: 'rt' },
+      } as unknown as Request;
 
-      controller.logout(res);
+      await controller.logout(req as never, res);
 
-      expect(logout).toHaveBeenCalled();
+      expect(logout).toHaveBeenCalledWith('u1', 'rt');
       expect(clearCookie).toHaveBeenCalledWith(
         AUTH_REFRESH_COOKIE,
         expect.objectContaining({

@@ -257,6 +257,8 @@ export type UserWhereInput = {
   lockedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   LoginAttempts?: Prisma.LoginAttemptsListRelationFilter
+  refreshTokens?: Prisma.RefreshTokenListRelationFilter
+  formSubmissions?: Prisma.FormSubmissionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -271,6 +273,8 @@ export type UserOrderByWithRelationInput = {
   lockedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   LoginAttempts?: Prisma.LoginAttemptsOrderByRelationAggregateInput
+  refreshTokens?: Prisma.RefreshTokenOrderByRelationAggregateInput
+  formSubmissions?: Prisma.FormSubmissionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -288,6 +292,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   lockedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   LoginAttempts?: Prisma.LoginAttemptsListRelationFilter
+  refreshTokens?: Prisma.RefreshTokenListRelationFilter
+  formSubmissions?: Prisma.FormSubmissionListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -336,6 +342,8 @@ export type UserCreateInput = {
   lockedUntil?: Date | string | null
   updatedAt?: Date | string
   LoginAttempts?: Prisma.LoginAttemptsCreateNestedManyWithoutEmailInput
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  formSubmissions?: Prisma.FormSubmissionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -350,6 +358,8 @@ export type UserUncheckedCreateInput = {
   lockedUntil?: Date | string | null
   updatedAt?: Date | string
   LoginAttempts?: Prisma.LoginAttemptsUncheckedCreateNestedManyWithoutEmailInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  formSubmissions?: Prisma.FormSubmissionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -364,6 +374,8 @@ export type UserUpdateInput = {
   lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   LoginAttempts?: Prisma.LoginAttemptsUpdateManyWithoutEmailNestedInput
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  formSubmissions?: Prisma.FormSubmissionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -378,6 +390,8 @@ export type UserUncheckedUpdateInput = {
   lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   LoginAttempts?: Prisma.LoginAttemptsUncheckedUpdateManyWithoutEmailNestedInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  formSubmissions?: Prisma.FormSubmissionUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -509,6 +523,34 @@ export type UserUpdateOneRequiredWithoutLoginAttemptsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutLoginAttemptsInput, Prisma.UserUpdateWithoutLoginAttemptsInput>, Prisma.UserUncheckedUpdateWithoutLoginAttemptsInput>
 }
 
+export type UserCreateNestedOneWithoutRefreshTokensInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRefreshTokensInput, Prisma.UserUncheckedCreateWithoutRefreshTokensInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRefreshTokensInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutRefreshTokensNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutRefreshTokensInput, Prisma.UserUncheckedCreateWithoutRefreshTokensInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutRefreshTokensInput
+  upsert?: Prisma.UserUpsertWithoutRefreshTokensInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutRefreshTokensInput, Prisma.UserUpdateWithoutRefreshTokensInput>, Prisma.UserUncheckedUpdateWithoutRefreshTokensInput>
+}
+
+export type UserCreateNestedOneWithoutFormSubmissionsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFormSubmissionsInput, Prisma.UserUncheckedCreateWithoutFormSubmissionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFormSubmissionsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutFormSubmissionsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutFormSubmissionsInput, Prisma.UserUncheckedCreateWithoutFormSubmissionsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutFormSubmissionsInput
+  upsert?: Prisma.UserUpsertWithoutFormSubmissionsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutFormSubmissionsInput, Prisma.UserUpdateWithoutFormSubmissionsInput>, Prisma.UserUncheckedUpdateWithoutFormSubmissionsInput>
+}
+
 export type UserCreateWithoutLoginAttemptsInput = {
   id?: string
   email: string
@@ -520,6 +562,8 @@ export type UserCreateWithoutLoginAttemptsInput = {
   failedLoginAttempts?: number
   lockedUntil?: Date | string | null
   updatedAt?: Date | string
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  formSubmissions?: Prisma.FormSubmissionCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutLoginAttemptsInput = {
@@ -533,6 +577,8 @@ export type UserUncheckedCreateWithoutLoginAttemptsInput = {
   failedLoginAttempts?: number
   lockedUntil?: Date | string | null
   updatedAt?: Date | string
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  formSubmissions?: Prisma.FormSubmissionUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutLoginAttemptsInput = {
@@ -562,6 +608,8 @@ export type UserUpdateWithoutLoginAttemptsInput = {
   failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  formSubmissions?: Prisma.FormSubmissionUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLoginAttemptsInput = {
@@ -575,6 +623,160 @@ export type UserUncheckedUpdateWithoutLoginAttemptsInput = {
   failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number
   lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  formSubmissions?: Prisma.FormSubmissionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutRefreshTokensInput = {
+  id?: string
+  email: string
+  password: string
+  nom: string
+  prenom: string
+  role?: $Enums.Role
+  createdAt?: Date | string
+  failedLoginAttempts?: number
+  lockedUntil?: Date | string | null
+  updatedAt?: Date | string
+  LoginAttempts?: Prisma.LoginAttemptsCreateNestedManyWithoutEmailInput
+  formSubmissions?: Prisma.FormSubmissionCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutRefreshTokensInput = {
+  id?: string
+  email: string
+  password: string
+  nom: string
+  prenom: string
+  role?: $Enums.Role
+  createdAt?: Date | string
+  failedLoginAttempts?: number
+  lockedUntil?: Date | string | null
+  updatedAt?: Date | string
+  LoginAttempts?: Prisma.LoginAttemptsUncheckedCreateNestedManyWithoutEmailInput
+  formSubmissions?: Prisma.FormSubmissionUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutRefreshTokensInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutRefreshTokensInput, Prisma.UserUncheckedCreateWithoutRefreshTokensInput>
+}
+
+export type UserUpsertWithoutRefreshTokensInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutRefreshTokensInput, Prisma.UserUncheckedUpdateWithoutRefreshTokensInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutRefreshTokensInput, Prisma.UserUncheckedCreateWithoutRefreshTokensInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutRefreshTokensInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutRefreshTokensInput, Prisma.UserUncheckedUpdateWithoutRefreshTokensInput>
+}
+
+export type UserUpdateWithoutRefreshTokensInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  nom?: Prisma.StringFieldUpdateOperationsInput | string
+  prenom?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  LoginAttempts?: Prisma.LoginAttemptsUpdateManyWithoutEmailNestedInput
+  formSubmissions?: Prisma.FormSubmissionUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutRefreshTokensInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  nom?: Prisma.StringFieldUpdateOperationsInput | string
+  prenom?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  LoginAttempts?: Prisma.LoginAttemptsUncheckedUpdateManyWithoutEmailNestedInput
+  formSubmissions?: Prisma.FormSubmissionUncheckedUpdateManyWithoutUserNestedInput
+}
+
+export type UserCreateWithoutFormSubmissionsInput = {
+  id?: string
+  email: string
+  password: string
+  nom: string
+  prenom: string
+  role?: $Enums.Role
+  createdAt?: Date | string
+  failedLoginAttempts?: number
+  lockedUntil?: Date | string | null
+  updatedAt?: Date | string
+  LoginAttempts?: Prisma.LoginAttemptsCreateNestedManyWithoutEmailInput
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutFormSubmissionsInput = {
+  id?: string
+  email: string
+  password: string
+  nom: string
+  prenom: string
+  role?: $Enums.Role
+  createdAt?: Date | string
+  failedLoginAttempts?: number
+  lockedUntil?: Date | string | null
+  updatedAt?: Date | string
+  LoginAttempts?: Prisma.LoginAttemptsUncheckedCreateNestedManyWithoutEmailInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutFormSubmissionsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutFormSubmissionsInput, Prisma.UserUncheckedCreateWithoutFormSubmissionsInput>
+}
+
+export type UserUpsertWithoutFormSubmissionsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutFormSubmissionsInput, Prisma.UserUncheckedUpdateWithoutFormSubmissionsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutFormSubmissionsInput, Prisma.UserUncheckedCreateWithoutFormSubmissionsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutFormSubmissionsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutFormSubmissionsInput, Prisma.UserUncheckedUpdateWithoutFormSubmissionsInput>
+}
+
+export type UserUpdateWithoutFormSubmissionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  nom?: Prisma.StringFieldUpdateOperationsInput | string
+  prenom?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  LoginAttempts?: Prisma.LoginAttemptsUpdateManyWithoutEmailNestedInput
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutFormSubmissionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  nom?: Prisma.StringFieldUpdateOperationsInput | string
+  prenom?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  LoginAttempts?: Prisma.LoginAttemptsUncheckedUpdateManyWithoutEmailNestedInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -584,10 +786,14 @@ export type UserUncheckedUpdateWithoutLoginAttemptsInput = {
 
 export type UserCountOutputType = {
   LoginAttempts: number
+  refreshTokens: number
+  formSubmissions: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   LoginAttempts?: boolean | UserCountOutputTypeCountLoginAttemptsArgs
+  refreshTokens?: boolean | UserCountOutputTypeCountRefreshTokensArgs
+  formSubmissions?: boolean | UserCountOutputTypeCountFormSubmissionsArgs
 }
 
 /**
@@ -607,6 +813,20 @@ export type UserCountOutputTypeCountLoginAttemptsArgs<ExtArgs extends runtime.Ty
   where?: Prisma.LoginAttemptsWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountRefreshTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RefreshTokenWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountFormSubmissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FormSubmissionWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -620,6 +840,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   lockedUntil?: boolean
   updatedAt?: boolean
   LoginAttempts?: boolean | Prisma.User$LoginAttemptsArgs<ExtArgs>
+  refreshTokens?: boolean | Prisma.User$refreshTokensArgs<ExtArgs>
+  formSubmissions?: boolean | Prisma.User$formSubmissionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -665,6 +887,8 @@ export type UserSelectScalar = {
 export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "password" | "nom" | "prenom" | "role" | "createdAt" | "failedLoginAttempts" | "lockedUntil" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   LoginAttempts?: boolean | Prisma.User$LoginAttemptsArgs<ExtArgs>
+  refreshTokens?: boolean | Prisma.User$refreshTokensArgs<ExtArgs>
+  formSubmissions?: boolean | Prisma.User$formSubmissionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -674,6 +898,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   name: "User"
   objects: {
     LoginAttempts: Prisma.$LoginAttemptsPayload<ExtArgs>[]
+    refreshTokens: Prisma.$RefreshTokenPayload<ExtArgs>[]
+    formSubmissions: Prisma.$FormSubmissionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1081,6 +1307,8 @@ readonly fields: UserFieldRefs;
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   LoginAttempts<T extends Prisma.User$LoginAttemptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$LoginAttemptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LoginAttemptsPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  refreshTokens<T extends Prisma.User$refreshTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$refreshTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RefreshTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  formSubmissions<T extends Prisma.User$formSubmissionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$formSubmissionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FormSubmissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1532,6 +1760,54 @@ export type User$LoginAttemptsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.LoginAttemptsScalarFieldEnum | Prisma.LoginAttemptsScalarFieldEnum[]
+}
+
+/**
+ * User.refreshTokens
+ */
+export type User$refreshTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RefreshToken
+   */
+  select?: Prisma.RefreshTokenSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RefreshToken
+   */
+  omit?: Prisma.RefreshTokenOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RefreshTokenInclude<ExtArgs> | null
+  where?: Prisma.RefreshTokenWhereInput
+  orderBy?: Prisma.RefreshTokenOrderByWithRelationInput | Prisma.RefreshTokenOrderByWithRelationInput[]
+  cursor?: Prisma.RefreshTokenWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RefreshTokenScalarFieldEnum | Prisma.RefreshTokenScalarFieldEnum[]
+}
+
+/**
+ * User.formSubmissions
+ */
+export type User$formSubmissionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FormSubmission
+   */
+  select?: Prisma.FormSubmissionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FormSubmission
+   */
+  omit?: Prisma.FormSubmissionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FormSubmissionInclude<ExtArgs> | null
+  where?: Prisma.FormSubmissionWhereInput
+  orderBy?: Prisma.FormSubmissionOrderByWithRelationInput | Prisma.FormSubmissionOrderByWithRelationInput[]
+  cursor?: Prisma.FormSubmissionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FormSubmissionScalarFieldEnum | Prisma.FormSubmissionScalarFieldEnum[]
 }
 
 /**

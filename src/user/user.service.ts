@@ -7,6 +7,9 @@ import type { User } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service';
 import { BcryptService } from '../utils/bcrpt';
 import type { UpdateUserDto } from './dto/update-user.dto';
+import { userPublicSelect } from './user-select';
+
+export type PublicUserRow = Omit<User, 'password'>;
 
 @Injectable()
 export class UserService {
@@ -15,63 +18,58 @@ export class UserService {
     private readonly bcryptService: BcryptService,
   ) {}
 
-  /**
-   * Find one user by email
-   * @param email - The email of the user to find
-   * @returns The user found or null if not found
-   */
   public async findOneUserByEmail(email: string) {
     return await this.prisma.user.findUnique({ where: { email } });
   }
 
-  /**
-   * Find one user by id
-   */
   public async findOneUserById(id: string) {
     return await this.prisma.user.findUnique({ where: { id } });
   }
 
-  /**
-   * Utilisateur sans mot de passe (ex. après validation JWT)
-   */
-  public async findSafeUserById(id: string): Promise<Omit<User, 'password'> | null> {
-    const user = await this.findOneUserById(id);
-    if (!user) {
-      return null;
-    }
-    const { password, ...safe } = user;
-    void password;
-    return safe;
-  }
-
-  /** Liste tous les utilisateurs (sans mot de passe). */
-  public async getAllUser(): Promise<Omit<User, 'password'>[]> {
-    const users = await this.prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    return users.map((u) => {
-      const { password, ...rest } = u;
-      void password;
-      return rest;
+  public async findSafeUserById(id: string): Promise<PublicUserRow | null> {
+    return await this.prisma.user.findUnique({
+      where: { id },
+      select: userPublicSelect,
     });
   }
 
-  /** Détail d’un utilisateur par id (sans mot de passe). */
-  public async getUserById(id: string): Promise<Omit<User, 'password'>> {
-    const user = await this.findOneUserById(id);
+  /** Liste paginée des utilisateurs (sans mot de passe). */
+  public async getAllUser(params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{ items: PublicUserRow[]; total: number; page: number; limit: number }> {
+    const page = Math.max(1, params?.page ?? 1);
+    const limit = Math.min(100, Math.max(1, params?.limit ?? 50));
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      this.prisma.user.findMany({
+        select: userPublicSelect,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    return { items, total, page, limit };
+  }
+
+  public async getUserById(id: string): Promise<PublicUserRow> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: userPublicSelect,
+    });
     if (!user) {
       throw new NotFoundException(`Utilisateur ${id} introuvable`);
     }
-    const { password, ...rest } = user;
-    void password;
-    return rest;
+    return user;
   }
 
-  /** Mise à jour partielle ; au moins un champ requis. */
   public async updateUser(
     id: string,
     data: UpdateUserDto,
-  ): Promise<Omit<User, 'password'>> {
+  ): Promise<PublicUserRow> {
     const existing = await this.findOneUserById(id);
     if (!existing) {
       throw new NotFoundException(`Utilisateur ${id} introuvable`);
@@ -113,16 +111,13 @@ export class UserService {
       );
     }
 
-    const updated = await this.prisma.user.update({
+    return await this.prisma.user.update({
       where: { id },
       data: updatePayload,
+      select: userPublicSelect,
     });
-    const { password, ...rest } = updated;
-    void password;
-    return rest;
   }
 
-  /** Supprime un utilisateur par id. */
   public async deleteUser(id: string): Promise<void> {
     const existing = await this.findOneUserById(id);
     if (!existing) {
