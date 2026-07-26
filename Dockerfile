@@ -13,18 +13,21 @@ RUN apt-get update \
 WORKDIR /app
 
 # Skip Chrome au build (telecharge uniquement dans l'image finale)
+# NODE_ENV=development : force les devDependencies (nest, typescript, prisma)
+# meme si Coolify injecte NODE_ENV=production au buildtime.
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV DATABASE_URL="file:./prisma/db.sqlite"
+ENV NODE_ENV=development
 
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 COPY prisma ./prisma
 COPY prisma.config.ts nest-cli.json tsconfig.json tsconfig.base.json tsconfig.build.json ./
 COPY src ./src
 
 RUN npx prisma generate \
-  && npm run build \
+  && npx nest build \
   && mkdir -p dist/generated \
   && cp -r src/generated/prisma dist/generated/prisma
 
