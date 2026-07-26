@@ -1,13 +1,19 @@
-import type { Browser } from 'puppeteer';
+import type { Browser, LaunchOptions } from 'puppeteer';
 import puppeteer from 'puppeteer';
 
 let browserPromise: Promise<Browser> | null = null;
 
-async function launchBrowser(): Promise<Browser> {
-  const browser = await puppeteer.launch({
+function buildLaunchOptions(): LaunchOptions {
+  const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+  return {
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-  });
+    ...(executablePath ? { executablePath } : {}),
+  };
+}
+
+async function launchBrowser(): Promise<Browser> {
+  const browser = await puppeteer.launch(buildLaunchOptions());
   browser.on('disconnected', () => {
     browserPromise = null;
   });

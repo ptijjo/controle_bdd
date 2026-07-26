@@ -12,7 +12,7 @@ RUN apt-get update \
 
 WORKDIR /app
 
-# Skip Chrome au build (telecharge uniquement dans l'image finale)
+# Skip Chrome au build (Chromium systeme dans l'image finale)
 # NODE_ENV=development : force les devDependencies (nest, typescript, prisma)
 # meme si Coolify injecte NODE_ENV=production au buildtime.
 ENV PUPPETEER_SKIP_DOWNLOAD=true
@@ -34,41 +34,13 @@ RUN npx prisma generate \
 ########## Runtime ##########
 FROM node:22-bookworm-slim AS production
 
-# Deps systeme Chromium (Puppeteer) + outils de compile natifs
+# Chromium Debian + deps PDF ; pas de telechargement Chrome Puppeteer
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     ca-certificates \
+    chromium \
     fonts-liberation \
     fonts-noto-color-emoji \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libatk1.0-0 \
-    libcairo2 \
-    libcups2 \
-    libdbus-1-3 \
-    libdrm2 \
-    libexpat1 \
-    libfontconfig1 \
-    libgbm1 \
-    libglib2.0-0 \
-    libgtk-3-0 \
-    libnspr4 \
-    libnss3 \
-    libpango-1.0-0 \
-    libpangocairo-1.0-0 \
-    libx11-6 \
-    libx11-xcb1 \
-    libxcb1 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxext6 \
-    libxfixes3 \
-    libxkbcommon0 \
-    libxrandr2 \
-    libxrender1 \
-    libxshmfence1 \
-    wget \
-    xdg-utils \
     python3 \
     make \
     g++ \
@@ -79,7 +51,8 @@ WORKDIR /app
 ENV NODE_ENV=production \
     PORT=8585 \
     TRUST_PROXY=1 \
-    PUPPETEER_CACHE_DIR=/app/.cache/puppeteer \
+    PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
     DATABASE_URL="file:/data/db.sqlite"
 
 COPY package.json package-lock.json ./
@@ -95,7 +68,7 @@ COPY prisma.config.ts ./
 COPY docker-entrypoint.sh ./
 
 RUN chmod +x docker-entrypoint.sh \
-  && mkdir -p /data /app/.cache/puppeteer \
+  && mkdir -p /data \
   && chown -R node:node /app /data
 
 USER node
