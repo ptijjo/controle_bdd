@@ -1,0 +1,37 @@
+# Dépendances & build
+node_modules
+dist
+coverage
+build
+*.tsbuildinfo
+
+# Git / IDE
+.git
+.github
+.cursor
+.vscode
+.idea
+
+# Secrets & env locaux
+.env
+.env.*
+!.env.example
+
+# Bases SQLite locales / e2e
+prisma/*.sqlite
+prisma/*.sqlite-journal
+**/*.sqlite
+**/*.sqlite-journal
+
+# Tests & docs (non requis à l’image)
+test
+**/*.spec.ts
+**/*.md
+!README.md
+
+# Divers
+controle
+logs
+*.log
+.temp
+.tmp

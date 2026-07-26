@@ -181,8 +181,7 @@ export class AuthController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Déconnexion',
-    description:
-      'Révoque le refresh en base et supprime le cookie httpOnly.',
+    description: 'Révoque le refresh en base et supprime le cookie httpOnly.',
   })
   async logout(
     @Req() req: RequestWithUser,
