@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Image prod NestJS + Prisma (SQLite) + Puppeteer — Coolify-ready.
 # Persistance SQLite : volume sur /data et
-#   DATABASE_URL=file:/data/db.sqlite
+#   DATABASE_URL=file:///data/db.sqlite
 
 ########## Build ##########
 FROM node:22-bookworm-slim AS builder
@@ -41,6 +41,7 @@ RUN apt-get update \
     chromium \
     fonts-liberation \
     fonts-noto-color-emoji \
+    wget \
     python3 \
     make \
     g++ \
@@ -53,7 +54,7 @@ ENV NODE_ENV=production \
     TRUST_PROXY=1 \
     PUPPETEER_SKIP_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
-    DATABASE_URL="file:/data/db.sqlite"
+    DATABASE_URL="file:///data/db.sqlite"
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev \

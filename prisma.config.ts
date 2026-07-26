@@ -9,6 +9,7 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: String(process.env['DATABASE_URL']),
+    // Evite String(undefined) → "undefined" (P1013 en prod)
+    url: process.env['DATABASE_URL'] ?? 'file:./prisma/db.sqlite',
   },
 });
